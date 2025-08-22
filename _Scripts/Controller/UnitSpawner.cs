@@ -1,5 +1,6 @@
 
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
 
 public class UnitSpawner : MonoBehaviour
@@ -21,6 +22,7 @@ public class UnitSpawner : MonoBehaviour
         GameObject heroBasePrefab = unitManager.GetHeroBasePrefab();
         GameObject enemyBasePrefab = unitManager.GetEnemyBasePrefab();
 
+    // SPAWN HERO
         Vector2Int heroSpawnCell = new Vector2Int(1, 1);
         Tile heroTile = GridManager.Instance.GetTileAtPosition(heroSpawnCell);
 
@@ -32,13 +34,19 @@ public class UnitSpawner : MonoBehaviour
             Vector3 spawnPosition = basePosition + offset;
 
             GameObject unitObject = Instantiate(heroBasePrefab, spawnPosition, Quaternion.identity);
-      
+            unitObject.transform.position = new Vector3(unitObject.transform.position.x,unitObject.transform.position.y,-1f );
+            Unit unitScript = unitObject.GetComponent<Unit>();
+            if (unitScript != null)
+            {
+                unitScript.SetPosition(heroSpawnCell);     
+                heroTile.SetOccupied(unitScript);           
+            }
         }
 
         Vector3 heroWorldPos = GridManager.Instance.GetWorldPosition(heroSpawnCell);
         Camera.main.transform.position = new Vector3(heroWorldPos.x, heroWorldPos.y, -10f);
 
-
+    // SPAWN ENEMY
         List<Vector2Int> availableCells = GridManager.Instance.GetAvailableCells();
         availableCells.Remove(heroSpawnCell);
 
@@ -61,7 +69,13 @@ public class UnitSpawner : MonoBehaviour
                 Vector3 spawnPosition = basePosition + offset;
 
                 GameObject unitObject = Instantiate(enemyBasePrefab, spawnPosition, Quaternion.identity);
-
+                unitObject.transform.position = new Vector3(unitObject.transform.position.x,unitObject.transform.position.y,-1f );
+                Unit unitScript = unitObject.GetComponent<Unit>();
+                if (unitScript != null)
+                {
+                    unitScript.SetPosition(groupCell);
+                    groupTile.SetOccupied(unitScript);
+                }
                 enemyIndex++;
             }
         }
