@@ -1,3 +1,4 @@
+
 using System.Collections;
 using System.Collections.Generic;
 using Unity.Mathematics;
@@ -13,7 +14,7 @@ public class GridManager : MonoBehaviour
     [SerializeField] private UnitSpawner unitSpawner;
     public Dictionary<Vector2Int, Tile> tiles;
 
-    private float tileSize = 2f;
+    private float tileSize = 4f;
 
     void Awake()
     {
@@ -29,7 +30,7 @@ public class GridManager : MonoBehaviour
     public void GenerateGrid()
     {
         tiles = new Dictionary<Vector2Int, Tile>();
-        float tileScale = 2f;
+        float tileScale = 4f;
 
         for (int x = 0; x < width; x++)
         {

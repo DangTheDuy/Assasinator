@@ -14,6 +14,8 @@ public class Unit : MonoBehaviour
     private int currentHealth => data.maxHealth;
     private int currentAttack => data.attackPower;
     private int currentDefend => data.defensePower;
+     private static Unit selectedUnit;
+     
 
     public Unit(UnitData unitData)
     {
@@ -25,8 +27,38 @@ public class Unit : MonoBehaviour
         currentPosition = pos;
     }
 
-    public void MoveTo(Vector3 worldPos)
-    {
 
+    private void OnMouseDown()
+    {
+        if (selectedUnit == this)
+        {
+            // Click lại chính nó -> bỏ chọn
+            Debug.Log("DeSelect");
+            DeSelect();
+        }
+        else
+        {
+            // Chọn unit mới
+            if (selectedUnit != null)
+            {
+                // (tùy bạn, có thể bỏ highlight unit cũ tại đây)
+            }
+
+            selectedUnit = this;
+            Debug.Log("Select " + name);
+        }
+    }
+    public void DeSelect()
+    {
+        selectedUnit = null;
+    }
+
+    public static Unit GetSelectedUnit() => selectedUnit;
+
+
+    public void MoveTo(Vector3 worldPos, Vector2Int gridPos)
+    {
+        transform.position = worldPos;
+        SetPosition(gridPos);
     }
 }
