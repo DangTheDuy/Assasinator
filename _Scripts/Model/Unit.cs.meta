@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 924f4231700f0ac4fa0743384dee798c
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences:
+  - data: {instanceID: 0}
+  - faceDownSprite: {fileID: 21300000, guid: b72c0d00310ef654692d0ab74271b8d6, type: 3}
+  - faceUpSprite: {instanceID: 0}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
