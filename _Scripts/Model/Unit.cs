@@ -75,5 +75,6 @@ public class Unit : MonoBehaviour
     {
         transform.position = new Vector3(worldPos.x, worldPos.y, -0.1f);
         SetPosition(gridPos);
+        DeSelect();
     }
 }

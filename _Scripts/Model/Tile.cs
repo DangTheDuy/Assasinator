@@ -48,14 +48,20 @@ public class Tile : MonoBehaviour
         Unit selected = Unit.GetSelectedUnit();
         if (selected == null) return;
 
-        if (IsObstacle || occupyingUnits.Count >= MaxUnitsPerTile) return;
+        if (selected.currentPosition == gridPosition) return;
 
-        Vector3 basePos = GridManager.Instance.GetWorldPosition(gridPosition);
-        Vector3 offset = GetLocalOffsetForUnit(occupyingUnits.Count); 
-        Vector3 newPos = basePos + offset;
+        if (!IsObstacle && occupyingUnits.Count < MaxUnitsPerTile)
+        {
+            // Tính vị trí spawn cho unit mới dựa vào slot đang trống
+            Vector3 basePos = GridManager.Instance.GetWorldPosition(gridPosition);
+            Vector3 offset = GetLocalOffsetForUnit(occupyingUnits.Count);
+            Vector3 newPos = basePos + offset;
 
-        selected.MoveTo(newPos, gridPosition);
+            // Gọi MoveTo -> unit tự xử lý remove khỏi ô cũ + add vào ô mới + DeSelect()
+            selected.MoveTo(newPos, gridPosition);
+        }
     }
+
 
 
 }
