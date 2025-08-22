@@ -22,50 +22,39 @@ public class Tile : MonoBehaviour
 
     public void SetOccupied(Unit unit)
     {
-        if (occupyingUnits.Count < MaxUnitsPerTile)
-        {
+        if (unit == null) return;
+        // tránh add duplicate và chỉ add khi còn chỗ
+        if (!occupyingUnits.Contains(unit) && occupyingUnits.Count < MaxUnitsPerTile)
             occupyingUnits.Add(unit);
-        }
     }
 
     public void SetUnoccupied(Unit unit)
     {
-        if (occupyingUnits.Contains(unit))
-        {
-            occupyingUnits.Remove(unit);
-        }
+        if (unit == null) return;
+        // remove tất cả các entry trùng (phòng duplicate bug)
+        occupyingUnits.RemoveAll(u => u == unit || u == null);
     }
 
     public Vector3 GetLocalOffsetForUnit(int index)
     {
-        // Tính offset theo lưới 3x3
         int row = index / 3;
         int col = index % 3;
-        float spacing = 1f; // khoảng cách giữa các unit
+        float spacing = 1f; 
         return new Vector3((col - 1) * spacing, (row - 1) * spacing, 0);
     }
 
     private void OnMouseDown()
     {
         Unit selected = Unit.GetSelectedUnit();
-        if (selected != null)
-        {
-            if (!IsObstacle && occupyingUnits.Count < MaxUnitsPerTile)
-            {
-                // Giải phóng tile cũ
-                Tile oldTile = GridManager.Instance.GetTileAtPosition(selected.currentPosition);
-                if (oldTile != null)
-                    oldTile.SetUnoccupied(selected);
+        if (selected == null) return;
 
-                // Đặt unit vào tile mới
-                Vector3 basePos = GridManager.Instance.GetWorldPosition(gridPosition);
-                Vector3 offset = GetLocalOffsetForUnit(occupyingUnits.Count);
-                Vector3 newPos = basePos + offset;
+        if (IsObstacle || occupyingUnits.Count >= MaxUnitsPerTile) return;
 
-                selected.MoveTo(newPos, gridPosition);
-                SetOccupied(selected);
-            }
-        }
+        Vector3 basePos = GridManager.Instance.GetWorldPosition(gridPosition);
+        Vector3 offset = GetLocalOffsetForUnit(occupyingUnits.Count); 
+        Vector3 newPos = basePos + offset;
+
+        selected.MoveTo(newPos, gridPosition);
     }
 
 
