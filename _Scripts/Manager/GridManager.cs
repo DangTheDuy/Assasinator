@@ -10,8 +10,6 @@ public class GridManager : MonoBehaviour
     public static GridManager Instance;
     [SerializeField] private int width, height;
     [SerializeField] private Tile grassTile;
-    [SerializeField] private Transform cam;
-    [SerializeField] private UnitSpawner unitSpawner;
     public Dictionary<Vector2Int, Tile> tiles;
 
     private float tileSize = 4f;
@@ -27,7 +25,7 @@ public class GridManager : MonoBehaviour
 
     }
 
-    public void GenerateGrid()
+   public void GenerateGrid()
     {
         tiles = new Dictionary<Vector2Int, Tile>();
         float tileScale = 4f;
@@ -38,23 +36,29 @@ public class GridManager : MonoBehaviour
             {
                 Vector2Int gridPos = new Vector2Int(x, y);
                 var spawnedTileObject = Instantiate(grassTile, new Vector3(x * tileScale, y * tileScale), quaternion.identity);
-                Tile spawnedTile = spawnedTileObject.GetComponent<Tile>(); // Lấy component Tile
+                Tile spawnedTile = spawnedTileObject.GetComponent<Tile>();
 
                 if (spawnedTile != null)
                 {
                     spawnedTile.name = $"Tile {x}, {y}";
                     spawnedTile.transform.localScale = new Vector3(tileScale, tileScale, 1);
                     spawnedTile.Init(x, y);
+
+                    // 🔥 Thêm caro: đổi màu dựa theo x+y
+                    SpriteRenderer sr = spawnedTile.GetComponent<SpriteRenderer>();
+                    if ((x + y) % 2 == 0)
+                    {
+                        sr.color = new Color(0.8f, 0.8f, 0.8f); // màu sáng
+                    }
+                    else
+                    {
+                        sr.color = new Color(0.4f, 0.4f, 0.4f); // màu tối
+                    }
+
                     tiles[gridPos] = spawnedTile;
                 }
             }
         }
-        AdjustCamera(tileScale);
-    }
-
-    void AdjustCamera(float scale)
-    {
-        cam.transform.position = new Vector3((width * scale) / 2 - 0.5f, (height * scale) / 2 - 0.8f, -10);
     }
 
     public Tile GetTileAtPosition(Vector2Int position)
