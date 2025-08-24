@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 public class HeroSystem : Singleton<HeroSystem>
@@ -17,6 +18,11 @@ public class HeroSystem : Singleton<HeroSystem>
     {
         ActionSystem.UnsubscriberReaction<EnemyTurnGA>(EnemyTurnPreReaction, ReactionTiming.PRE);
         ActionSystem.UnsubscriberReaction<EnemyTurnGA>(EnemyTurnPostReaction, ReactionTiming.POST);
+    }
+
+    public List<HeroUnit> GetAllHeroes()
+    {
+        return new List<HeroUnit>(FindObjectsOfType<HeroUnit>()); 
     }
 
     public void GenerateNextIntent()

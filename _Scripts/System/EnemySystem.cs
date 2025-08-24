@@ -18,10 +18,9 @@ public class EnemySystem : Singleton<EnemySystem>
         ActionSystem.DetachPerformer<EnemyTurnGA>();
     }
 
-    public List<Unit> GetAllEnemies()
+    public List<EnemyUnit> GetAllEnemies()
     {
-        // TODO: return danh sách unit kẻ địch
-        return new List<Unit>(FindObjectsOfType<Unit>()); 
+        return new List<EnemyUnit>(FindObjectsOfType<EnemyUnit>()); 
     }
 
     private IEnumerator EnemyTurnPerformer(EnemyTurnGA enemyTurnGA)
@@ -33,7 +32,7 @@ public class EnemySystem : Singleton<EnemySystem>
     {
         Vector2Int dir = enemyMoveGA.direction;
 
-        List<Unit> enemies = GetAllEnemies();
+        List<EnemyUnit> enemies = GetAllEnemies();
         foreach (var enemy in enemies)
         {
             Vector2Int target = enemy.currentPosition + dir;

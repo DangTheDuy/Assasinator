@@ -30,12 +30,11 @@ public class UnitSpawner : MonoBehaviour
         {
             UnitData unitData = playerUnitDataList[i];
             GameObject unitObject = Instantiate(heroBasePrefab, Vector3.zero, Quaternion.identity);
-
-            Unit unitScript = unitObject.GetComponent<Unit>();
-            if (unitScript != null)
+            HeroUnit hero = unitObject.GetComponent<HeroUnit>();
+            if (hero != null)
             {
-                unitScript.Setup(unitData);
-                heroTile.PlaceUnit(unitScript);         
+                hero.Setup(unitData);
+                heroTile.PlaceUnit(hero);         
             }
         }
 
@@ -61,12 +60,11 @@ public class UnitSpawner : MonoBehaviour
             {
                 UnitData unitData = enemyUnitDataList[enemyIndex % enemyUnitDataList.Count];
                 GameObject unitObject = Instantiate(enemyBasePrefab, Vector3.zero, Quaternion.identity);
-
-                Unit unitScript = unitObject.GetComponent<Unit>();
-                if (unitScript != null)
+                EnemyUnit enemy = unitObject.GetComponent<EnemyUnit>();
+                if (enemy != null)
                 {
-                    unitScript.Setup(unitData);
-                    groupTile.PlaceUnit(unitScript); 
+                    enemy.Setup(unitData);
+                    groupTile.PlaceUnit(enemy); 
                 }
                 enemyIndex++;
             }
