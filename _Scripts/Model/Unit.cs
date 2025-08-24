@@ -24,24 +24,14 @@ public class Unit : MonoBehaviour
 
     public void SetPosition(Vector2Int pos)
     {
-        // Giải phóng tile cũ
         Tile oldTile = GridManager.Instance.GetTileAtPosition(currentPosition);
         if (oldTile != null)
         {
             oldTile.SetUnoccupied(this);
         }
 
-        // Ghi nhớ vị trí mới
         currentPosition = pos;
-
-        // Đánh dấu tile mới là đã có unit này
-        Tile newTile = GridManager.Instance.GetTileAtPosition(currentPosition);
-        if (newTile != null)
-        {
-            newTile.SetOccupied(this);
-        }
     }
-
 
     private void OnMouseDown()
     {
@@ -73,8 +63,23 @@ public class Unit : MonoBehaviour
 
     public void MoveTo(Vector3 worldPos, Vector2Int gridPos)
     {
-        transform.position = new Vector3(worldPos.x, worldPos.y, -0.1f);
-        SetPosition(gridPos);
+        // Giải phóng slot cũ
+        Tile oldTile = GridManager.Instance.GetTileAtPosition(currentPosition);
+        if (oldTile != null)
+            oldTile.SetUnoccupied(this);
+
+        // Gán slot mới ở tile đích
+        Tile newTile = GridManager.Instance.GetTileAtPosition(gridPos);
+        if (newTile != null)
+        {
+            newTile.SetOccupied(this); // slot gán ở đây duy nhất
+            Vector3 offset = newTile.GetLocalOffsetForUnit(this);
+            Vector3 basePos = GridManager.Instance.GetWorldPosition(gridPos);
+            transform.position = new Vector3(basePos.x + offset.x, basePos.y + offset.y, -0.1f);
+        }
+
+        currentPosition = gridPos;
         DeSelect();
     }
+
 }
