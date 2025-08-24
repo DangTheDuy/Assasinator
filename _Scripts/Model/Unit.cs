@@ -11,15 +11,24 @@ public class Unit : MonoBehaviour
 
     public Vector2Int currentPosition { get; set; }
     public Sprite Image => data.Image;
-    private int currentHealth => data.maxHealth;
-    private int currentAttack => data.attackPower;
-    private int currentDefend => data.defensePower;
+    private int currentHealth ;
+    private int currentAttack ;
+    private int currentDefend ;
      private static Unit selectedUnit;
      
-
-    public Unit(UnitData unitData)
+    public void Setup(UnitData unitData)
     {
         data = unitData;
+        currentHealth = data.maxHealth;
+        currentAttack = data.attackPower;
+        currentDefend = data.defensePower;
+
+        SpriteRenderer sr = GetComponent<SpriteRenderer>();
+        if (sr != null && data.Image != null)
+        {
+            sr.sprite = data.Image;
+        }
+        name = data.unitName; 
     }
 
     public void SetPosition(Vector2Int pos)
