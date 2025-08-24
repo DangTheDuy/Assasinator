@@ -13,6 +13,12 @@ public class Tile : MonoBehaviour
     public List<Unit> occupyingUnits = new List<Unit>();
     private Dictionary<Unit, int> unitSlots = new Dictionary<Unit, int>();
     public int MaxUnitsPerTile => 9;
+    private bool detectionCheckedThisFrame = false;
+
+    void LateUpdate()
+    {
+        detectionCheckedThisFrame = false;
+    }
 
     public void Init(int x, int y)
     {
@@ -29,6 +35,15 @@ public class Tile : MonoBehaviour
             occupyingUnits.Add(unit);
         int slot = FindAvailableSlot();
         unitSlots[unit] = slot;
+
+        bool hasHero = occupyingUnits.Exists(u => u is HeroUnit);
+        bool hasEnemy = occupyingUnits.Exists(u => u is EnemyUnit);
+
+        if (hasHero && hasEnemy && !detectionCheckedThisFrame)
+        {
+            detectionCheckedThisFrame = true;
+            CheckDetection();
+        }
     }
 
     public void SetUnoccupied(Unit unit)
@@ -80,7 +95,7 @@ public class Tile : MonoBehaviour
             selected.MoveTo(basePos, gridPosition);
         }
     }
-    
+
     public void PlaceUnit(Unit unit)
     {
         if (unit == null) return;
@@ -91,5 +106,32 @@ public class Tile : MonoBehaviour
 
         unit.transform.position = new Vector3(basePos.x + offset.x, basePos.y + offset.y, -1f);
         unit.currentPosition = gridPosition;
+    }
+    
+    public void CheckDetection()
+    {
+        // ✅ lấy % phát hiện cao nhất trong tile
+        int highestDetectChance = 0;
+        foreach (var unit in occupyingUnits)
+        {
+            if (unit is EnemyUnit enemy)
+            {
+                highestDetectChance = Mathf.Max(highestDetectChance, enemy.DetectionChance);
+            }
+        }
+
+        // Gọi detection roll
+        if (highestDetectChance > 0)
+        {
+            int roll = UnityEngine.Random.Range(0, 100);
+            if (roll < highestDetectChance)
+            {
+                Debug.Log($"Hero bị phát hiện! (roll {roll}/{highestDetectChance})");
+            }
+            else
+            {
+                Debug.Log($"Hero chưa bị phát hiện (roll {roll}/{highestDetectChance})");
+            }
+        }
     }
 }

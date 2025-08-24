@@ -9,8 +9,9 @@ public class UnitData : ScriptableObject
     public Sprite Image;
     public int moveRange;
     public int attackRange;
-    public int maxHealth ;
+    public int maxHealth;
     public int attackPower;
     public int defensePower;
     public int teamID;
+    [Range(0,100)] public int detectionChance = 10;
 }
