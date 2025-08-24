@@ -13,8 +13,7 @@ MonoBehaviour:
   m_Name: Assasin 1
   m_EditorClassIdentifier: 
   unitName: assin
-  rank: 0
-  mana: 0
+  Image: {fileID: 21300000, guid: 92d2b7b7641f92f47b7eea0246d85c93, type: 3}
   moveRange: 0
   attackRange: 0
   maxHealth: 0
