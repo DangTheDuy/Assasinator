@@ -16,7 +16,7 @@ public class Unit : MonoBehaviour
     private int currentDefend ;
      private static Unit selectedUnit;
      
-    public void Setup(UnitData unitData)
+    public virtual void Setup(UnitData unitData)
     {
         data = unitData;
         currentHealth = data.maxHealth;
@@ -48,7 +48,7 @@ public class Unit : MonoBehaviour
         {
             // Click lại chính nó -> bỏ chọn
             Debug.Log("DeSelect");
-            DeSelect();
+            OnDeSelect();
         }
         else
         {
@@ -57,12 +57,18 @@ public class Unit : MonoBehaviour
             {
                 // (tùy bạn, có thể bỏ highlight unit cũ tại đây)
             }
+            OnSelect();
 
-            selectedUnit = this;
-            Debug.Log("Select " + name);
         }
     }
-    public void DeSelect()
+
+    public virtual void OnSelect()
+    {
+        selectedUnit = this;
+        Debug.Log("Select " + name);
+    }
+
+    public virtual void OnDeSelect()
     {
         selectedUnit = null;
     }
@@ -88,7 +94,7 @@ public class Unit : MonoBehaviour
         }
 
         currentPosition = gridPos;
-        DeSelect();
+        OnDeSelect();
     }
 
 }

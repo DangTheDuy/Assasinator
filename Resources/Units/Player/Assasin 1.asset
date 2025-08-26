@@ -13,10 +13,14 @@ MonoBehaviour:
   m_Name: Assasin 1
   m_EditorClassIdentifier: 
   unitName: assin
-  Image: {fileID: 21300000, guid: 92d2b7b7641f92f47b7eea0246d85c93, type: 3}
+  Image: {fileID: 21300000, guid: 4554f9d2f09163540ad0ebc30972e4cc, type: 3}
   moveRange: 0
   attackRange: 0
   maxHealth: 0
   attackPower: 0
   defensePower: 0
   teamID: 0
+  skills:
+  - {fileID: 11400000, guid: 092b6e362d49cdb4190b0387446028f9, type: 2}
+  - {fileID: 11400000, guid: ca162643af0ce354ead488fdb9db0914, type: 2}
+  detectionChance: 10

@@ -8,6 +8,8 @@ public class UnitSpawner : MonoBehaviour
     [SerializeField] private UnitManager unitManager;
     [SerializeField] private int playerUnitsToSpawn ;
     [SerializeField] private int enemyUnitsToSpawn ;
+    [SerializeField] private Transform heroContainer;
+    [SerializeField] private Transform enemyContainer;
 
     public void Start()
     {
