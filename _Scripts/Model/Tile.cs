@@ -14,15 +14,37 @@ public class Tile : MonoBehaviour
     private Dictionary<Unit, int> unitSlots = new Dictionary<Unit, int>();
     public int MaxUnitsPerTile => 9;
     private bool detectionCheckedThisFrame = false;
-
-    void LateUpdate()
-    {
-        detectionCheckedThisFrame = false;
-    }
+    private GameObject overlay;
 
     public void Init(int x, int y)
     {
         gridPosition = new Vector2Int(x, y);
+
+        // tạo overlay highlight (dán lên trên tile)
+        overlay = new GameObject("Overlay");
+        overlay.transform.SetParent(transform);
+        overlay.transform.localPosition = Vector3.zero;
+        overlay.transform.localScale = Vector3.one;
+
+        SpriteRenderer overlaySr = overlay.AddComponent<SpriteRenderer>();
+        overlaySr.sprite = GetComponent<SpriteRenderer>().sprite; // dùng sprite gốc
+        overlaySr.color = new Color(0f, 1f, 1f, 0.3f); // xanh cyan mờ mờ
+        overlaySr.sortingOrder = GetComponent<SpriteRenderer>().sortingOrder + 1; // luôn hiển thị trên tile
+
+        overlay.SetActive(false); // mặc định ẩn
+    }
+
+    public void Highlight(bool active)
+    {
+        if (overlay != null)
+        {
+            overlay.SetActive(active);
+        }
+    }
+
+    void LateUpdate()
+    {
+        detectionCheckedThisFrame = false;
     }
 
     public bool IsOccupied => occupyingUnits.Count >= MaxUnitsPerTile;
@@ -89,10 +111,17 @@ public class Tile : MonoBehaviour
 
         if (!IsObstacle && occupyingUnits.Count < MaxUnitsPerTile)
         {
-            // chỉ tính basePos
-            Vector3 basePos = GridManager.Instance.GetWorldPosition(gridPosition);
-            // MoveTo sẽ lo SetOccupied + offset
-            selected.MoveTo(basePos, gridPosition);
+            int distance = GridManager.Instance.GetDistance(selected.currentPosition, gridPosition);
+
+            if (distance <= selected.data.moveRange)  // 🔥 kiểm tra range
+            {
+                Vector3 basePos = GridManager.Instance.GetWorldPosition(gridPosition);
+                selected.MoveTo(basePos, gridPosition);
+            }
+            else
+            {
+                Debug.Log($"{selected.name} không thể đi xa hơn {selected.data.moveRange} ô!");
+            }
         }
     }
 

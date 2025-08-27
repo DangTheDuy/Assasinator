@@ -116,5 +116,8 @@ public class GridManager : MonoBehaviour
         return new Vector3(gridPosition.x * tileSize, gridPosition.y * tileSize, 0);
     }
 
-
+    public int GetDistance(Vector2Int from, Vector2Int to)
+    {
+        return Mathf.Abs(from.x - to.x) + Mathf.Abs(from.y - to.y); 
+    }
 }

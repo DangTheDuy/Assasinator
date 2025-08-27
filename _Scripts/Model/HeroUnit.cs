@@ -33,12 +33,25 @@ public class HeroUnit : Unit
             Debug.Log($"Hero có skill: {skill.skillName}");
         }
         UIManager.Instance.ShowSkillBar(this);
+        List<Vector2Int> tilesInRange = new List<Vector2Int>();
+        foreach (var kv in GridManager.Instance.tiles)
+        {
+            int distance = GridManager.Instance.GetDistance(currentPosition, kv.Key);
+            if (distance <= data.moveRange && GridManager.Instance.IsCellAvailableForMovement(kv.Key))
+            {
+                kv.Value.Highlight(true);
+            }
+        }
     }
 
-    public override void OnDeSelect()
+    public override void OnDeselect()
     {
-        base.OnDeSelect();
+        base.OnDeselect();
         UIManager.Instance.HideSkillBar();
+        foreach (var kv in GridManager.Instance.tiles)
+        {
+            kv.Value.Highlight(false);
+        }
     }
     
     public List<SkillData> GetSkills()

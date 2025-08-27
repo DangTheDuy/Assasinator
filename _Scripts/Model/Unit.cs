@@ -48,7 +48,7 @@ public class Unit : MonoBehaviour
         {
             // Click lại chính nó -> bỏ chọn
             Debug.Log("DeSelect");
-            OnDeSelect();
+            OnDeselect();
         }
         else
         {
@@ -68,7 +68,7 @@ public class Unit : MonoBehaviour
         Debug.Log("Select " + name);
     }
 
-    public virtual void OnDeSelect()
+    public virtual void OnDeselect()
     {
         selectedUnit = null;
     }
@@ -94,7 +94,7 @@ public class Unit : MonoBehaviour
         }
 
         currentPosition = gridPos;
-        OnDeSelect();
+        OnDeselect();
     }
 
 }
