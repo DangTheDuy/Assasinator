@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   unitName: assin
   Image: {fileID: 21300000, guid: 4554f9d2f09163540ad0ebc30972e4cc, type: 3}
-  moveRange: 0
+  moveRange: 1
   attackRange: 0
   maxHealth: 0
   attackPower: 0

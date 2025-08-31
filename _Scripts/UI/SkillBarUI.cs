@@ -22,7 +22,13 @@ public class SkillBarUI : MonoBehaviour
         {
             GameObject btnObj = Instantiate(buttonPrefab, buttonContainer);
             Button btn = btnObj.GetComponent<Button>();
-            btn.onClick.AddListener(() => skill.Execute(owner));
+           btn.onClick.AddListener(() =>
+            {
+                if (Unit.SelectedEnemy != null)
+                    skill.Execute(owner, Unit.SelectedEnemy);
+                else
+                    Debug.LogWarning("Chưa chọn enemy target!");
+            });
 
             // set icon/text nếu có
             btnObj.GetComponentInChildren<TMPro.TextMeshProUGUI>().text = skill.skillName;

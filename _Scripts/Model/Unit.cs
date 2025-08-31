@@ -14,7 +14,9 @@ public class Unit : MonoBehaviour
     private int currentHealth ;
     private int currentAttack ;
     private int currentDefend ;
-     private static Unit selectedUnit;
+    public static HeroUnit SelectedHero;
+    public static EnemyUnit SelectedEnemy; 
+
      
     public virtual void Setup(UnitData unitData)
     {
@@ -38,22 +40,29 @@ public class Unit : MonoBehaviour
         {
             oldTile.SetUnoccupied(this);
         }
-
+        
         currentPosition = pos;
     }
 
     private void OnMouseDown()
     {
-        if (selectedUnit == this)
+
+        if (this is EnemyUnit enemy)
+        {
+            SelectedEnemy = enemy; 
+            Debug.Log($"Đã chọn target {enemy.name}");
+            return; 
+        }
+
+        if (SelectedHero == this)
         {
             // Click lại chính nó -> bỏ chọn
-            Debug.Log("DeSelect");
             OnDeselect();
         }
         else
         {
             // Chọn unit mới
-            if (selectedUnit != null)
+            if (SelectedHero != null)
             {
                 // (tùy bạn, có thể bỏ highlight unit cũ tại đây)
             }
@@ -64,17 +73,15 @@ public class Unit : MonoBehaviour
 
     public virtual void OnSelect()
     {
-        selectedUnit = this;
-        Debug.Log("Select " + name);
+
     }
 
     public virtual void OnDeselect()
     {
-        selectedUnit = null;
+        SelectedHero = null;
     }
 
-    public static Unit GetSelectedUnit() => selectedUnit;
-
+     public static HeroUnit GetSelectedUnit() => SelectedHero;
 
     public void MoveTo(Vector3 worldPos, Vector2Int gridPos)
     {

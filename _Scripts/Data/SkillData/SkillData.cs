@@ -7,9 +7,9 @@ public class SkillData : ScriptableObject
     public Sprite icon;
     [TextArea] public string description;
 
-    public void Execute(Unit caster)
+    public virtual void Execute(Unit caster, Unit target)
     {
-        Debug.Log($"{caster.name} dùng skill {skillName}");
         // TODO: logic skill (tấn công, buff, ám sát, ...)
+        Debug.Log("Cast Skill: " + skillName);
     }
 }

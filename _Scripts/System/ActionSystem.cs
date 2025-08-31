@@ -17,7 +17,8 @@ public class ActionSystem : Singleton<ActionSystem>
     
     public void Perform(GameAction action, Action OnPerformFinished = null)
     {
-        if (IsPerforming) 
+        Debug.Log($"Perform được gọi với action {action.GetType().Name}");
+        if (IsPerforming)
         {
             return;
         }
@@ -62,6 +63,7 @@ public class ActionSystem : Singleton<ActionSystem>
         Type type = action.GetType(); // Lấy loại cụ thể
         if (performers.ContainsKey(type))
         {
+            Debug.Log($"Gọi performer cho action {type.Name}");
             yield return performers[type](action);
         }
     }

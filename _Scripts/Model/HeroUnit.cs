@@ -1,3 +1,4 @@
+
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -6,9 +7,8 @@ using UnityEngine;
 public class HeroUnit : Unit
 {
     public List<SkillData> skills = new List<SkillData>();
-    private UnitData unitData;
+    public bool IsDetected { get; set; }
 
-    private SkillBarUI skillBar;
 
     public override void Setup(UnitData data)
     {
@@ -28,10 +28,7 @@ public class HeroUnit : Unit
     public override void OnSelect()
     {
         base.OnSelect();
-        foreach (var skill in skills)
-        {
-            Debug.Log($"Hero có skill: {skill.skillName}");
-        }
+        SelectedHero = this;
         UIManager.Instance.ShowSkillBar(this);
         List<Vector2Int> tilesInRange = new List<Vector2Int>();
         foreach (var kv in GridManager.Instance.tiles)
@@ -47,6 +44,7 @@ public class HeroUnit : Unit
     public override void OnDeselect()
     {
         base.OnDeselect();
+        if (SelectedHero == this) SelectedHero = null;
         UIManager.Instance.HideSkillBar();
         foreach (var kv in GridManager.Instance.tiles)
         {
@@ -59,4 +57,3 @@ public class HeroUnit : Unit
         return skills;
     }
 }
-
