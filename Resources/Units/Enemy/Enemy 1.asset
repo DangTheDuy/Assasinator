@@ -20,4 +20,5 @@ MonoBehaviour:
   attackPower: 0
   defensePower: 0
   teamID: 0
-  detectionChance: 10
+  skills: []
+  detectionChance: 82

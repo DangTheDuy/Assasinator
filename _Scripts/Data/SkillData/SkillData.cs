@@ -6,6 +6,8 @@ public class SkillData : ScriptableObject
     public string skillName;
     public Sprite icon;
     [TextArea] public string description;
+    public bool requireTarget; 
+    public SkillType type;
 
     public virtual void Execute(Unit caster, Unit target)
     {

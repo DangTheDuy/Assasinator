@@ -4,7 +4,7 @@ using UnityEngine.UI;
 
 public class SkillBarUI : MonoBehaviour
 {
-    public GameObject buttonPrefab; // Prefab 1 nút skill (có Image + Text)
+    public GameObject buttonPrefab; 
     public Transform buttonContainer;
 
     private Unit owner;
@@ -12,30 +12,33 @@ public class SkillBarUI : MonoBehaviour
     public void Setup(Unit unit, List<SkillData> skills)
     {
         owner = unit;
-
-        // Clear các nút cũ nếu có
         foreach (Transform child in buttonContainer)
             Destroy(child.gameObject);
 
-        // Tạo nút cho mỗi skill
         foreach (SkillData skill in skills)
         {
             GameObject btnObj = Instantiate(buttonPrefab, buttonContainer);
             Button btn = btnObj.GetComponent<Button>();
-           btn.onClick.AddListener(() =>
+            btn.onClick.AddListener(() =>
             {
-                if (Unit.SelectedEnemy != null)
-                    skill.Execute(owner, Unit.SelectedEnemy);
+                if (skill.requireTarget)
+                {
+                    if (Unit.SelectedEnemy != null)
+                        skill.Execute(owner, Unit.SelectedEnemy);
+                    else
+                        Debug.LogWarning($"Skill '{skill.skillName}' yêu cầu target nhưng chưa chọn enemy!");
+                }
                 else
-                    Debug.LogWarning("Chưa chọn enemy target!");
+                {
+                    skill.Execute(owner, null); 
+                }
             });
 
-            // set icon/text nếu có
             btnObj.GetComponentInChildren<TMPro.TextMeshProUGUI>().text = skill.skillName;
             btnObj.GetComponentInChildren<Image>().sprite = skill.icon;
         }
 
-        gameObject.SetActive(false); // ẩn mặc định
+        gameObject.SetActive(false);
     }
 
     public void Show() => gameObject.SetActive(true);
