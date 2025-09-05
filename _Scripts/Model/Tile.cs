@@ -114,6 +114,9 @@ public class Tile : MonoBehaviour
 
     private void OnMouseDown()
     {
+        // Đang target thì không di chuyển
+        if (TargetingSystem.Instance != null && TargetingSystem.Instance.IsTargeting) return;
+
         Unit selected = Unit.GetSelectedUnit();
         if (selected == null) return;
         if (selected.currentPosition == gridPosition) return;

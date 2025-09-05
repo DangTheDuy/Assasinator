@@ -32,9 +32,12 @@ public class TargetingSystem : Singleton<TargetingSystem>
         currentSkill = null;
         caster = null;
 
-        foreach (var kv in GridManager.Instance.tiles)
+        foreach (Unit unit in Unit.AllUnits)
         {
-            kv.Value.Highlight(false);
+            if (unit is EnemyUnit enemy)
+            {
+                enemy.SetHighlight(false);
+            }
         }
     }
 

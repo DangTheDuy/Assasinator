@@ -10,18 +10,13 @@ public class EnemyUnit : Unit
 
     private void OnMouseDown()
     {
-        // Nếu đang ở target mode thì giao cho TargetingSystem xử lý
         if (TargetingSystem.Instance != null && TargetingSystem.Instance.IsTargeting)
         {
             TargetingSystem.Instance.TrySelectEnemy(this);
             return;
         }
 
-        // Nếu không phải target mode -> xử lý click enemy bình thường
         if (SelectedHero == null) return;
-
-        SelectedEnemy = this;
-        Debug.Log($"Enemy {name} được chọn làm target");
 
         SkillBarUI skillBar = FindObjectOfType<SkillBarUI>();
         if (skillBar != null)
@@ -32,7 +27,6 @@ public class EnemyUnit : Unit
             {
                 interactionSkills.Add(Resources.Load<SkillData>("Skills/AssassinateSkill"));
             }
-
             interactionSkills.Add(Resources.Load<SkillData>("Skills/FightSkill"));
 
             // Owner = hero, forcedTarget = enemy
@@ -41,7 +35,6 @@ public class EnemyUnit : Unit
             skillBar.Show();
         }
     }
-
 
     public void SetHighlight(bool active)
     {

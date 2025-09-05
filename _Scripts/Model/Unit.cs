@@ -83,21 +83,35 @@ public class Unit : MonoBehaviour
     public virtual void OnDeselect()
     {
         SelectedHero = null;
+
+        if (TargetingSystem.Instance != null && TargetingSystem.Instance.IsTargeting)
+        {
+            TargetingSystem.Instance.ExitTargetMode();
+            Debug.Log($"[Unit] Hero bỏ chọn -> ExitTargetMode()");
+        }
     }
 
     private void OnDestroy()
     {
-        AllUnits.Remove(this);
+        if (AllUnits.Contains(this))
+            AllUnits.Remove(this);
 
-        if (GridManager.Instance != null)
-        {
-            Tile tile = GridManager.Instance.GetTileAtPosition(currentPosition);
-            if (tile != null)
-                tile.SetUnoccupied(this);
-        }
+        Tile tile = GridManager.Instance.GetTileAtPosition(currentPosition);
+        if (tile != null)
+            tile.SetUnoccupied(this);
 
         if (SelectedEnemy == this) SelectedEnemy = null;
         if (SelectedHero == this) SelectedHero = null;
+
+        SkillBarUI skillBar = FindObjectOfType<SkillBarUI>();
+        if (skillBar != null && skillBar.gameObject.activeSelf)
+        {
+            WorldSpaceUIFollow follow = skillBar.GetComponent<WorldSpaceUIFollow>();
+            if (follow != null && follow.target == this.transform)
+            {
+                skillBar.Hide();
+            }
+        }
     }
 
 
@@ -121,7 +135,23 @@ public class Unit : MonoBehaviour
         }
 
         currentPosition = gridPos;
-        OnDeselect();
-    }
+        if (this is HeroUnit hero && SelectedHero == hero)
+        {
+            // Tắt highlight cũ
+            foreach (var kv in GridManager.Instance.tiles)
+            {
+                kv.Value.Highlight(false);
+            }
 
+            // Tính lại highlight cho các ô mới trong range
+            foreach (var kv in GridManager.Instance.tiles)
+            {
+                int distance = GridManager.Instance.GetDistance(currentPosition, kv.Key);
+                if (distance <= data.moveRange && GridManager.Instance.IsCellAvailableForMovement(kv.Key))
+                {
+                    kv.Value.Highlight(true);
+                }
+            }
+        }
+    }
 }
