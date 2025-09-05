@@ -15,9 +15,10 @@ public class Unit : MonoBehaviour
     private int currentAttack ;
     private int currentDefend ;
     public static HeroUnit SelectedHero;
-    public static EnemyUnit SelectedEnemy; 
+    public static EnemyUnit SelectedEnemy;
+    public static List<Unit> AllUnits = new List<Unit>();
 
-     
+
     public virtual void Setup(UnitData unitData)
     {
         data = unitData;
@@ -30,7 +31,10 @@ public class Unit : MonoBehaviour
         {
             sr.sprite = data.Image;
         }
-        name = data.unitName; 
+        name = data.unitName;
+
+        if (!AllUnits.Contains(this))
+            AllUnits.Add(this);
     }
 
     public void SetPosition(Vector2Int pos)
@@ -80,6 +84,22 @@ public class Unit : MonoBehaviour
     {
         SelectedHero = null;
     }
+
+    private void OnDestroy()
+    {
+        AllUnits.Remove(this);
+
+        if (GridManager.Instance != null)
+        {
+            Tile tile = GridManager.Instance.GetTileAtPosition(currentPosition);
+            if (tile != null)
+                tile.SetUnoccupied(this);
+        }
+
+        if (SelectedEnemy == this) SelectedEnemy = null;
+        if (SelectedHero == this) SelectedHero = null;
+    }
+
 
      public static HeroUnit GetSelectedUnit() => SelectedHero;
 

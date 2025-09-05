@@ -4,8 +4,9 @@ using UnityEngine;
 public class AssassinateSkill : SkillData
 {
     public override void Execute(Unit caster, Unit target)
-    {
-        Debug.Log("Execute Assasinate");
-            ActionSystem.Instance.Perform(new AssassinateGA(caster, target));
-    }
+{
+    Debug.Log($"[AssassinateSkill] Execute: caster={caster?.name} target={target?.name}");
+    ActionSystem.Instance.Perform(new AssassinateGA(caster, target));
+}
+
 }

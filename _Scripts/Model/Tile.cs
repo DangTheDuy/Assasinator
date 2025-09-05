@@ -14,6 +14,7 @@ public class Tile : MonoBehaviour
     private Dictionary<Unit, int> unitSlots = new Dictionary<Unit, int>();
     public int MaxUnitsPerTile => 9;
     private bool detectionCheckedThisFrame = false;
+
     private GameObject overlay;
 
     public void Init(int x, int y)
@@ -39,8 +40,16 @@ public class Tile : MonoBehaviour
         if (overlay != null)
         {
             overlay.SetActive(active);
+
+           /* SpriteRenderer sr = overlay.GetComponent<SpriteRenderer>();
+            if (active)
+            {
+                bool hasEnemy = occupyingUnits.Exists(u => u is EnemyUnit);
+                sr.color = hasEnemy ? new Color(1f, 0f, 0f, 0.3f) : new Color(0f, 1f, 1f, 0.3f); 
+            }*/
         }
     }
+
 
     void LateUpdate()
     {

@@ -21,6 +21,5 @@ MonoBehaviour:
   defensePower: 0
   teamID: 0
   skills:
-  - {fileID: 11400000, guid: 092b6e362d49cdb4190b0387446028f9, type: 2}
-  - {fileID: 11400000, guid: ca162643af0ce354ead488fdb9db0914, type: 2}
+  - {fileID: 11400000, guid: a94fa58360c1abf47bad07fdc57f1708, type: 2}
   detectionChance: 10
