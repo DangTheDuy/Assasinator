@@ -28,6 +28,11 @@ public class HeroUnit : Unit
     public override void OnSelect()
     {
         base.OnSelect();
+        if (SelectedHero != null && SelectedHero != this)
+        {
+            SelectedHero.OnDeselect();
+        }
+        
         SelectedHero = this;
         UIManager.Instance.ShowSkillBar(this);
         List<Vector2Int> tilesInRange = new List<Vector2Int>();

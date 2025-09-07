@@ -116,6 +116,7 @@ public class Tile : MonoBehaviour
     {
         // Đang target thì không di chuyển
         if (TargetingSystem.Instance != null && TargetingSystem.Instance.IsTargeting) return;
+        if (SkillBarUI.IsEnemyInteractionOpen) return;
 
         Unit selected = Unit.GetSelectedUnit();
         if (selected == null) return;
