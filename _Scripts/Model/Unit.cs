@@ -118,7 +118,7 @@ public class Unit : MonoBehaviour
 
      public static HeroUnit GetSelectedUnit() => SelectedHero;
 
-    public void MoveTo(Vector3 worldPos, Vector2Int gridPos)
+    public virtual void MoveTo(Vector3 worldPos, Vector2Int gridPos)
     {
         // Giải phóng slot cũ
         Tile oldTile = GridManager.Instance.GetTileAtPosition(currentPosition);

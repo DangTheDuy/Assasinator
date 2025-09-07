@@ -20,22 +20,37 @@ public class EnemyUnit : Unit
         if (SelectedHero == null) return;
 
         SkillBarUI skillBar = FindObjectOfType<SkillBarUI>();
-        if (skillBar != null)
+        if (skillBar == null) return;
+
+        // Nếu đã chọn enemy này rồi → hủy chọn enemy, hiện lại skill bar của Hero
+        if (SelectedEnemy == this)
         {
-            List<SkillData> interactionSkills = new List<SkillData>();
+            SelectedEnemy = null;
+            skillBar.Hide();
 
-            if (!SelectedHero.IsDetected)
-            {
-                interactionSkills.Add(Resources.Load<SkillData>("Skills/AssassinateSkill"));
-            }
-            interactionSkills.Add(Resources.Load<SkillData>("Skills/FightSkill"));
-
-            // Owner = hero, forcedTarget = enemy
-            skillBar.Setup(SelectedHero, interactionSkills, this);
-            skillBar.GetComponent<WorldSpaceUIFollow>().target = this.transform;
+            // Hiện lại skill bar của Hero
+            skillBar.Setup(SelectedHero, SelectedHero.GetSkills(), null);
+            skillBar.GetComponent<WorldSpaceUIFollow>().target = SelectedHero.transform;
             skillBar.Show();
+
+            return;
         }
+
+        // Nếu chọn enemy mới
+        SelectedEnemy = this;
+        List<SkillData> interactionSkills = new List<SkillData>();
+
+        if (!SelectedHero.IsDetected && SelectedHero.currentPosition == currentPosition)
+        {
+            interactionSkills.Add(Resources.Load<SkillData>("Skills/AssassinateSkill"));
+        }
+        interactionSkills.Add(Resources.Load<SkillData>("Skills/FightSkill"));
+
+        skillBar.Setup(SelectedHero, interactionSkills, this);
+        skillBar.GetComponent<WorldSpaceUIFollow>().target = this.transform;
+        skillBar.Show();
     }
+
 
     public void SetHighlight(bool active)
     {
