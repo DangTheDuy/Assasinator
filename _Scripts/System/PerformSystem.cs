@@ -19,6 +19,10 @@ public class PerformSystem : MonoBehaviour
     private IEnumerator AssassinatePerformer(AssassinateGA assassinateGA)
     {
         yield return ExecuteKill(assassinateGA.Target);
+        if (Unit.SelectedHero != null)
+        {
+            UIManager.Instance.ShowSkillBar(Unit.SelectedHero);
+        }
     }
 
     private IEnumerator ShurikenPerformer(ShurikenGA shurikenGA)

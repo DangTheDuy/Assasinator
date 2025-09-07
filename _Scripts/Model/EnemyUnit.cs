@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class EnemyUnit : Unit
 {
@@ -41,16 +42,19 @@ public class EnemyUnit : Unit
         if (highlightOverlay == null)
         {
             highlightOverlay = new GameObject("HighlightOverlay");
-            highlightOverlay.transform.SetParent(transform);
+            highlightOverlay.transform.SetParent(icon.transform); 
             highlightOverlay.transform.localPosition = Vector3.zero;
             highlightOverlay.transform.localScale = Vector3.one;
 
-            SpriteRenderer sr = highlightOverlay.AddComponent<SpriteRenderer>();
-            sr.sprite = GetComponent<SpriteRenderer>().sprite;
-            sr.color = new Color(1f, 0f, 0f, 0.3f); // đỏ mờ
-            sr.sortingOrder = GetComponent<SpriteRenderer>().sortingOrder + 1;
+            Image overlayImage = highlightOverlay.AddComponent<Image>();
+            overlayImage.sprite = icon.sprite; 
+            overlayImage.color = new Color(1f, 0f, 0f, 0.5f); 
+            overlayImage.raycastTarget = false; 
+
+            highlightOverlay.transform.SetSiblingIndex(icon.transform.GetSiblingIndex() + 1);
         }
 
         highlightOverlay.SetActive(active);
     }
+
 }

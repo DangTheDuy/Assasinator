@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
+using UnityEngine.UI;
 
 [System.Serializable]
 public class Unit : MonoBehaviour
@@ -16,6 +17,7 @@ public class Unit : MonoBehaviour
     private int currentDefend ;
     public static HeroUnit SelectedHero;
     public static EnemyUnit SelectedEnemy;
+    public Image icon;
     public static List<Unit> AllUnits = new List<Unit>();
 
 
@@ -26,10 +28,9 @@ public class Unit : MonoBehaviour
         currentAttack = data.attackPower;
         currentDefend = data.defensePower;
 
-        SpriteRenderer sr = GetComponent<SpriteRenderer>();
-        if (sr != null && data.Image != null)
+        if (icon != null && data.Image != null)
         {
-            sr.sprite = data.Image;
+            icon.sprite = data.Image;
         }
         name = data.unitName;
 

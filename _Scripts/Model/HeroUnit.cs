@@ -32,7 +32,7 @@ public class HeroUnit : Unit
         {
             SelectedHero.OnDeselect();
         }
-        
+
         SelectedHero = this;
         UIManager.Instance.ShowSkillBar(this);
         List<Vector2Int> tilesInRange = new List<Vector2Int>();
@@ -48,6 +48,7 @@ public class HeroUnit : Unit
 
     public override void OnDeselect()
     {
+        Debug.Log("Deselect");
         base.OnDeselect();
         if (SelectedHero == this) SelectedHero = null;
         UIManager.Instance.HideSkillBar();

@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: ShurikenSkill
   m_EditorClassIdentifier: 
   skillName: 
-  icon: {fileID: 21300000, guid: 3b0497f5c50d040478fa02e4bfaa9402, type: 3}
+  icon: {fileID: 21300000, guid: fe9104e8b9fd4c545baf2fab24282598, type: 3}
   description: 
   requireTarget: 1
   type: 0

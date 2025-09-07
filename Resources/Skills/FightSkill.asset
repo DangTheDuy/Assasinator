@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: FightSkill
   m_EditorClassIdentifier: 
   skillName: 
-  icon: {fileID: 21300000, guid: 840df642ca63c424fada32341e17427d, type: 3}
+  icon: {fileID: 21300000, guid: cd604c42494e05e47b6ff21eda6ab078, type: 3}
   description: 
   requireTarget: 0
   type: 0
