@@ -9,8 +9,8 @@ public class SkillBarUI : MonoBehaviour
 
     private Unit owner;
     private Unit forcedTarget;
+    private SkillData selectedSkill = null;
     public static bool IsEnemyInteractionOpen { get; private set; } = false;
-
 
     public void Setup(Unit unit, List<SkillData> skills, Unit forcedTarget = null)
     {
@@ -18,37 +18,64 @@ public class SkillBarUI : MonoBehaviour
         this.forcedTarget = forcedTarget;
         IsEnemyInteractionOpen = forcedTarget != null;
 
-        foreach (Transform child in buttonContainer)
-            Destroy(child.gameObject);
+        ClearButtons();
 
         foreach (SkillData skill in skills)
         {
-            GameObject btnObj = Instantiate(buttonPrefab, buttonContainer);
-            Button btn = btnObj.GetComponent<Button>();
-            btn.onClick.AddListener(() =>
-            {
-                if (skill.requireTarget)
-                {
-                    TargetingSystem.Instance.EnterTargetMode(owner, skill);
-                }
-                else if (this.forcedTarget != null)
-                {
-                    skill.Execute(owner, this.forcedTarget);
-                }
-                else
-                {
-                    skill.Execute(owner, null);
-                }
-            });
-
-            btnObj.GetComponentInChildren<TMPro.TextMeshProUGUI>().text = skill.skillName;
-            btnObj.GetComponentInChildren<Image>().sprite = skill.icon;
+            CreateSkillButton(skill);
         }
 
         gameObject.SetActive(false);
     }
 
+    private void ClearButtons()
+    {
+        foreach (Transform child in buttonContainer)
+            Destroy(child.gameObject);
+    }
+
+    private void CreateSkillButton(SkillData skill)
+    {
+        GameObject btnObj = Instantiate(buttonPrefab, buttonContainer);
+        Button btn = btnObj.GetComponent<Button>();
+
+        btn.onClick.AddListener(() =>
+        {
+            HeroUnit hero = owner as HeroUnit;
+            if (hero == null)
+            {
+                Debug.LogWarning("Skill owner không phải HeroUnit!");
+                return;
+            }
+
+            if (!hero.HasEnoughAP(skill.apCost))
+            {
+                Debug.Log($"Không đủ AP để dùng skill {skill.skillName}");
+                return;
+            }
+
+            if (skill.requireTarget)
+            {
+                TargetingSystem.Instance.EnterTargetMode(owner, skill);
+            }
+            else if (forcedTarget != null)
+            {
+                skill.Execute(owner, forcedTarget);
+            }
+            else
+            {
+                skill.Execute(owner, null);
+            }
+
+            hero.SpendAP(skill.apCost);
+        });
+
+        btnObj.GetComponentInChildren<TMPro.TextMeshProUGUI>().text = skill.skillName;
+        btnObj.GetComponentInChildren<Image>().sprite = skill.icon;
+    }
+
     public void Show() => gameObject.SetActive(true);
+
     public void Hide()
     {
         gameObject.SetActive(false);

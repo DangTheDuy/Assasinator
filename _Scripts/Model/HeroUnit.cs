@@ -9,6 +9,7 @@ public class HeroUnit : Unit
     public List<SkillData> skills = new List<SkillData>();
     public GameObject arrow;
     public GameObject apPrefab;
+    public GameObject emptyApPrefab;
     public Transform apContainer;
 
     public bool IsDetected { get; set; }
@@ -91,13 +92,18 @@ public class HeroUnit : Unit
     public void UpdateAP(int value)
     {
         if (apContainer == null) return;
+        int maxAP = data.maxAP;
 
-        for (int i = 0; i < apContainer.childCount; i++)
+        foreach (Transform child in apContainer)
+            Destroy(child.gameObject);
+
+        for (int i = 0; i < maxAP; i++)
         {
-            bool isActive = i < value;
-            apContainer.GetChild(i).gameObject.SetActive(isActive);
+            GameObject apIcon = i < value ? apPrefab : emptyApPrefab;
+            Instantiate(apIcon, apContainer);
         }
     }
+
 
     public bool HasEnoughAP(int amount) => currentAP >= amount;
 

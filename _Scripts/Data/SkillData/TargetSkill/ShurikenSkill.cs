@@ -6,10 +6,9 @@ using UnityEngine;
 public class ShurikenSkill : TargetSkill
 {
     public override void Execute(Unit caster, Unit target)
-{
-    Debug.Log($"[ShurikenSkill] Execute: caster={caster?.name} target={target?.name}");
-    ActionSystem.Instance.Perform(new ShurikenGA(caster, target));
-}
+    {
+        ActionSystem.Instance.Perform(new ShurikenGA(caster, target));
+    }
 
 
 }

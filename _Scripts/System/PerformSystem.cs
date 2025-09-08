@@ -34,7 +34,6 @@ public class PerformSystem : MonoBehaviour
     {
         if (target == null)
         {
-            Debug.LogWarning("[ExecuteKill] Target null trong ExecuteKill!");
             yield break;
         }
 

@@ -6,6 +6,7 @@ public class SkillData : ScriptableObject
     public string skillName;
     public Sprite icon;
     [TextArea] public string description;
+    public int apCost = 1;
     public bool requireTarget; 
     public SkillType type;
 
