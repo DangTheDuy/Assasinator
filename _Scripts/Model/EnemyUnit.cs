@@ -1,6 +1,7 @@
 
 using System.Collections;
 using System.Collections.Generic;
+using DG.Tweening;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -8,6 +9,9 @@ public class EnemyUnit : Unit
 {
     public int DetectionChance => data.detectionChance;
     private GameObject highlightOverlay;
+    public GameObject arrow;
+    private Tween arrowTween;
+
 
     private void OnMouseDown()
     {
@@ -70,6 +74,27 @@ public class EnemyUnit : Unit
         }
 
         highlightOverlay.SetActive(active);
+
+        // ✅ Hiện hoặc ẩn arrow
+        if (arrow != null)
+        {
+            if (active)
+            {
+                arrow.SetActive(true);
+                arrow.transform.localPosition = new Vector3(0, 0.8f, 0);
+                arrowTween?.Kill();
+
+                arrowTween = arrow.transform.DOLocalMoveY(1.0f, 0.8f)
+                    .SetLoops(-1, LoopType.Yoyo)
+                    .SetEase(Ease.InOutSine);
+            }
+            else
+            {
+                arrowTween?.Kill();
+                arrow.SetActive(false);
+            }
+        }
     }
+
 
 }
