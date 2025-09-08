@@ -9,9 +9,7 @@ public class EnemyUnit : Unit
 {
     public int DetectionChance => data.detectionChance;
     private GameObject highlightOverlay;
-    public GameObject arrow;
-    private Tween arrowTween;
-
+    private GameObject arrowInstance;
 
     private void OnMouseDown()
     {
@@ -75,26 +73,21 @@ public class EnemyUnit : Unit
 
         highlightOverlay.SetActive(active);
 
-        // ✅ Hiện hoặc ẩn arrow
-        if (arrow != null)
+        // ✅ Hiện hoặc ẩn arrow dùng ArrowFollowUnit
+        if (active)
         {
-            if (active)
+            if (arrowInstance == null)
             {
-                arrow.SetActive(true);
-                arrow.transform.localPosition = new Vector3(0, 0.8f, 0);
-                arrowTween?.Kill();
+                arrowInstance = Instantiate(Resources.Load<GameObject>("Prefabs/ArrowUI"));
+                arrowInstance.transform.Find("ArrowContainer").GetComponent<ArrowFollowUnit>().target = transform;
+            }
 
-                arrowTween = arrow.transform.DOLocalMoveY(1.0f, 0.8f)
-                    .SetLoops(-1, LoopType.Yoyo)
-                    .SetEase(Ease.InOutSine);
-            }
-            else
-            {
-                arrowTween?.Kill();
-                arrow.SetActive(false);
-            }
+            arrowInstance.SetActive(true);
+        }
+        else
+        {
+            if (arrowInstance != null)
+                arrowInstance.SetActive(false);
         }
     }
-
-
 }
