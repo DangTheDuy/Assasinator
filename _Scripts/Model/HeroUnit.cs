@@ -102,6 +102,9 @@ public class HeroUnit : Unit
             GameObject apIcon = i < value ? apPrefab : emptyApPrefab;
             Instantiate(apIcon, apContainer);
         }
+
+        if (SelectedHero != null)
+            UIManager.Instance.ShowSkillBar(this);
     }
 
 
@@ -111,6 +114,7 @@ public class HeroUnit : Unit
     {
         currentAP = Mathf.Max(0, currentAP - amount);
         UpdateAP(currentAP);
+        UIManager.Instance.ShowSkillBar(this);
     }
 
     public void RefillAP()

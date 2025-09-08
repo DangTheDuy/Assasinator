@@ -45,8 +45,6 @@ public class TargetingSystem : Singleton<TargetingSystem>
     {
         if (currentSkill == null || caster == null || enemy == null) return;
 
-        Debug.Log($"[TargetingSystem] TrySelectEnemy caster={caster?.name} enemy={enemy?.name} currentSkill={currentSkill?.skillName}");
-
         Vector2Int casterPos = caster.currentPosition;
         Vector2Int enemyPos = enemy.currentPosition;
 
@@ -55,7 +53,13 @@ public class TargetingSystem : Singleton<TargetingSystem>
         if (isAligned)
         {
             currentSkill.Execute(caster, enemy);
+            if (caster is HeroUnit hero)
+            {
+                hero.SpendAP(currentSkill.apCost);
+            }
+
             ExitTargetMode();
+            SkillBarUI.Instance?.ResetSelectedSkill(); 
         }
         else
         {

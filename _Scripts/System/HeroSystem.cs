@@ -5,6 +5,10 @@ public class HeroSystem : Singleton<HeroSystem>
 {
     private Vector2Int currentDirection;
 
+    private void Start()
+    {
+        GenerateNextIntent(); 
+    }
     private void OnEnable()
     {
         ActionSystem.UnsubscriberReaction<EnemyTurnGA>(EnemyTurnPreReaction, ReactionTiming.PRE);

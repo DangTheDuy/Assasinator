@@ -2,11 +2,10 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class SkillBarUI : MonoBehaviour
+public class SkillBarUI : Singleton<SkillBarUI>
 {
     public GameObject buttonPrefab; 
     public Transform buttonContainer;
-
     private Unit owner;
     private Unit forcedTarget;
     private SkillData selectedSkill = null;
@@ -36,8 +35,19 @@ public class SkillBarUI : MonoBehaviour
 
     private void CreateSkillButton(SkillData skill)
     {
+        HeroUnit hero = owner as HeroUnit;
         GameObject btnObj = Instantiate(buttonPrefab, buttonContainer);
         Button btn = btnObj.GetComponent<Button>();
+        btnObj.GetComponentInChildren<Image>().sprite = skill.icon;
+
+        bool hasEnoughAP = hero != null && hero.HasEnoughAP(skill.apCost);
+        btn.interactable = hasEnoughAP;
+
+        Image overlay = btnObj.transform.Find("Overlay")?.GetComponent<Image>();
+        if (overlay != null)
+        {
+            overlay.enabled = !hasEnoughAP;
+        }
 
         btn.onClick.AddListener(() =>
         {
@@ -48,30 +58,41 @@ public class SkillBarUI : MonoBehaviour
                 return;
             }
 
-            if (!hero.HasEnoughAP(skill.apCost))
+            bool isAlreadyTargetingThisSkill = TargetingSystem.Instance.IsTargeting && selectedSkill == skill;
+            bool notEnoughAP = !hero.HasEnoughAP(skill.apCost);
+
+            if (isAlreadyTargetingThisSkill || notEnoughAP)
             {
-                Debug.Log($"Không đủ AP để dùng skill {skill.skillName}");
+                if (isAlreadyTargetingThisSkill)
+                {
+                    TargetingSystem.Instance.ExitTargetMode();
+                    selectedSkill = null;
+                    Debug.Log($"Đã hủy chọn skill {skill.skillName}");
+                }
                 return;
             }
 
             if (skill.requireTarget)
             {
+                selectedSkill = skill;
                 TargetingSystem.Instance.EnterTargetMode(owner, skill);
+                return;
             }
-            else if (forcedTarget != null)
-            {
+
+            if (forcedTarget != null)
                 skill.Execute(owner, forcedTarget);
-            }
             else
-            {
                 skill.Execute(owner, null);
-            }
 
             hero.SpendAP(skill.apCost);
+            ResetSelectedSkill();
         });
 
-        btnObj.GetComponentInChildren<TMPro.TextMeshProUGUI>().text = skill.skillName;
-        btnObj.GetComponentInChildren<Image>().sprite = skill.icon;
+    }
+
+    public void ResetSelectedSkill()
+    {
+        selectedSkill = null;
     }
 
     public void Show() => gameObject.SetActive(true);
