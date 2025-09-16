@@ -152,7 +152,7 @@ public class Tile : MonoBehaviour
     
     public void CheckDetection()
     {
-        // ✅ lấy % phát hiện cao nhất trong tile
+        // lấy % phát hiện cao nhất trong tile
         int highestDetectChance = 0;
         foreach (var unit in occupyingUnits)
         {
@@ -162,18 +162,21 @@ public class Tile : MonoBehaviour
             }
         }
 
-        // Gọi detection roll
         if (highestDetectChance > 0)
         {
             int roll = UnityEngine.Random.Range(0, 100);
             if (roll < highestDetectChance)
             {
                 Debug.Log($"Hero bị phát hiện! (roll {roll}/{highestDetectChance})");
+                foreach (var unit in occupyingUnits)
+                {
+                    if (unit is HeroUnit hero)
+                    {
+                        hero.IsDetected = true;
+                    }
+                }
             }
-            else
-            {
-                Debug.Log($"Hero chưa bị phát hiện (roll {roll}/{highestDetectChance})");
-            }
+            else Debug.Log($"Hero chưa bị phát hiện (roll {roll}/{highestDetectChance})");
         }
     }
 }

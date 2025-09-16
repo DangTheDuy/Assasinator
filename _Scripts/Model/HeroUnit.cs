@@ -13,10 +13,10 @@ public class HeroUnit : Unit
     public Transform apContainer;
 
     public bool IsDetected { get; set; }
-    private Tween arrowTween;
+    private GameObject arrowInstance;
     private int currentAP;
 
-    // SETUP ============================================================================================
+    // ============================================== SETUP ==============================================
     public override void Setup(UnitData data)
     {
         base.Setup(data);
@@ -32,10 +32,16 @@ public class HeroUnit : Unit
         UpdateAP(currentAP);
     }
 
-    // SELECT ===========================================================================================
+    //  ========================================== SELECT =================================================
     public override void OnSelect()
     {
         base.OnSelect();
+
+        if (SelectedEnemy != null)
+        {
+            SelectedEnemy.SetHighlight(false);
+            SelectedEnemy = null;
+        }
 
         if (SelectedHero != null && SelectedHero != this)
             SelectedHero.OnDeselect();
@@ -47,7 +53,7 @@ public class HeroUnit : Unit
         HighlightMovementTiles();
     }
 
-    // DESELECT =========================================================================================
+    //  =========================================== DESELECT ==============================================
     public override void OnDeselect()
     {
         base.OnDeselect();
@@ -58,9 +64,15 @@ public class HeroUnit : Unit
         UIManager.Instance.HideSkillBar();
         HideArrow();
         ClearTileHighlights();
+
+        if (SelectedEnemy != null)
+        {
+            SelectedEnemy.SetHighlight(false);
+            SelectedEnemy = null;
+        }
     }
 
-    // MOVE =============================================================================================
+    // ================================================ MOVE =============================================
     public override void MoveTo(Vector3 worldPos, Vector2Int gridPos)
     {
         if (!HasEnoughAP(1))
@@ -73,7 +85,7 @@ public class HeroUnit : Unit
         SpendAP(1);
     }
 
-    // AP SYSTEM ========================================================================================
+    // ================================================ AP SYSTEM ========================================
     private void InitAPBar()
     {
         if (apPrefab == null || apContainer == null)
@@ -123,29 +135,29 @@ public class HeroUnit : Unit
         UpdateAP(currentAP);
     }
 
-    // ARROW ============================================================================================
+    //=============================================== ARROW =============================================
     private void ShowArrow()
     {
-        if (arrow == null) return;
+        if (arrowInstance == null)
+        {
+            arrowInstance = Instantiate(Resources.Load<GameObject>("Prefabs/ArrowUI"));
+            ArrowFollowUnit follow = arrowInstance.GetComponentInChildren<ArrowFollowUnit>(); 
+            if (follow != null)
+            {
+                follow.target = transform;
+            }
+        }
 
-        arrow.SetActive(true);
-        arrow.transform.localPosition = new Vector3(0, 0.8f, 0);
-        arrowTween?.Kill();
-
-        arrowTween = arrow.transform.DOLocalMoveY(1.0f, 0.8f)
-            .SetLoops(-1, LoopType.Yoyo)
-            .SetEase(Ease.InOutSine);
+        arrowInstance.SetActive(true);
     }
 
     private void HideArrow()
     {
-        if (arrow == null) return;
-
-        arrowTween?.Kill();
-        arrow.SetActive(false);
+        if (arrowInstance != null)
+            arrowInstance.SetActive(false);
     }
 
-    // TILE HIGHLIGHT ===================================================================================
+    // =========================================== TILE HIGHLIGHT ========================================
     private void HighlightMovementTiles()
     {
         foreach (var kv in GridManager.Instance.tiles)
@@ -162,6 +174,6 @@ public class HeroUnit : Unit
             kv.Value.Highlight(false);
     }
 
-    // ACCESS ===========================================================================================
+    // ============================================= ACCESS ==============================================
     public List<SkillData> GetSkills() => skills;
 }

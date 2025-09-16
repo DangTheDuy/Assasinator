@@ -28,6 +28,7 @@ public class EnemyUnit : Unit
         if (SelectedEnemy == this)
         {
             SelectedEnemy = null;
+            SetHighlight(false);
             skillBar.Hide();
 
             // Hiện lại skill bar của Hero
@@ -39,18 +40,16 @@ public class EnemyUnit : Unit
         }
 
         // Nếu chọn enemy mới
-        SelectedEnemy = this;
-        List<SkillData> interactionSkills = new List<SkillData>();
-
-        if (!SelectedHero.IsDetected && SelectedHero.currentPosition == currentPosition)
+        if (SelectedEnemy == null)
         {
-            interactionSkills.Add(Resources.Load<SkillData>("Skills/AssassinateSkill"));
-        }
-        interactionSkills.Add(Resources.Load<SkillData>("Skills/FightSkill"));
+            SelectedEnemy = this;
+            SetHighlight(true);
 
-        skillBar.Setup(SelectedHero, interactionSkills, this);
-        skillBar.GetComponent<WorldSpaceUIFollow>().target = this.transform;
-        skillBar.Show();
+            List<SkillData> interactionSkills = GetInteractionSkills();
+            skillBar.Setup(SelectedHero, interactionSkills, this);
+            skillBar.GetComponent<WorldSpaceUIFollow>().target = transform;
+            skillBar.Show();
+        }
     }
 
 
@@ -59,21 +58,21 @@ public class EnemyUnit : Unit
         if (highlightOverlay == null)
         {
             highlightOverlay = new GameObject("HighlightOverlay");
-            highlightOverlay.transform.SetParent(icon.transform); 
+            highlightOverlay.transform.SetParent(icon.transform);
             highlightOverlay.transform.localPosition = Vector3.zero;
             highlightOverlay.transform.localScale = Vector3.one;
 
             Image overlayImage = highlightOverlay.AddComponent<Image>();
-            overlayImage.sprite = icon.sprite; 
-            overlayImage.color = new Color(1f, 0f, 0f, 0.5f); 
-            overlayImage.raycastTarget = false; 
+            overlayImage.sprite = icon.sprite;
+            overlayImage.color = new Color(1f, 0f, 0f, 0.5f);
+            overlayImage.raycastTarget = false;
 
             highlightOverlay.transform.SetSiblingIndex(icon.transform.GetSiblingIndex() + 1);
         }
 
         highlightOverlay.SetActive(active);
 
-        // ✅ Hiện hoặc ẩn arrow dùng ArrowFollowUnit
+        //  Hiện hoặc ẩn arrow dùng ArrowFollowUnit
         if (active)
         {
             if (arrowInstance == null)
@@ -90,4 +89,16 @@ public class EnemyUnit : Unit
                 arrowInstance.SetActive(false);
         }
     }
+
+
+
+    private List<SkillData> GetInteractionSkills()
+    {
+        return new List<SkillData>
+        {
+            Resources.Load<SkillData>("Skills/AssassinateSkill"),
+            Resources.Load<SkillData>("Skills/FightSkill")
+        };
+    }
+
 }

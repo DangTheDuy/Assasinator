@@ -40,18 +40,40 @@ public class SkillBarUI : Singleton<SkillBarUI>
         Button btn = btnObj.GetComponent<Button>();
         btnObj.GetComponentInChildren<Image>().sprite = skill.icon;
 
-        bool hasEnoughAP = hero != null && hero.HasEnoughAP(skill.apCost);
-        btn.interactable = hasEnoughAP;
+        bool isInteractable = false;
+
+                if (skill.skillName == "Fight")
+                {
+                    isInteractable = hero != null && forcedTarget != null &&
+                                    hero.currentPosition == forcedTarget.currentPosition;
+                }
+                else if (skill.skillName == "Assassinate")
+                {
+                    isInteractable = hero != null && forcedTarget != null &&
+                                    !hero.IsDetected &&
+                                    hero.currentPosition == forcedTarget.currentPosition;
+                }
+                else
+                {
+                    isInteractable = hero != null && hero.HasEnoughAP(skill.apCost);
+                }
+
+        btn.interactable = isInteractable;
 
         Image overlay = btnObj.transform.Find("Overlay")?.GetComponent<Image>();
         if (overlay != null)
         {
-            overlay.enabled = !hasEnoughAP;
+            overlay.enabled = !isInteractable;
         }
 
         btn.onClick.AddListener(() =>
         {
-            HeroUnit hero = owner as HeroUnit;
+            if (!isInteractable)
+            {
+                Debug.Log($"Không thể sử dụng skill {skill.skillName} do chưa thỏa điều kiện.");
+                return;
+            }
+
             if (hero == null)
             {
                 Debug.LogWarning("Skill owner không phải HeroUnit!");
@@ -79,16 +101,12 @@ public class SkillBarUI : Singleton<SkillBarUI>
                 return;
             }
 
-            if (forcedTarget != null)
-                skill.Execute(owner, forcedTarget);
-            else
-                skill.Execute(owner, null);
-
+            skill.Execute(owner, forcedTarget);
             hero.SpendAP(skill.apCost);
             ResetSelectedSkill();
         });
-
     }
+
 
     public void ResetSelectedSkill()
     {
