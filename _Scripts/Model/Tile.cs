@@ -95,8 +95,13 @@ public class Tile : MonoBehaviour
         int row = index / 3;
         int col = index % 3;
         float spacing = 1f;
-        return new Vector3((col - 1) * spacing, (row - 1) * spacing, 0);
+
+        // Đảo chiều row để bắt đầu từ trên
+        int flippedRow = 2 - row;
+
+        return new Vector3((col - 1) * spacing, (flippedRow - 1) * spacing, 0);
     }
+
 
     private int FindAvailableSlot()
     {
