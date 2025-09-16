@@ -32,20 +32,54 @@ public class EnemySystem : Singleton<EnemySystem>
     private IEnumerator EnemyMovePerformer(EnemyMoveGA enemyMoveGA)
     {
         Vector2Int dir = enemyMoveGA.direction;
+        List<EnemyUnit> allEnemies = GetAllEnemies();
 
-        List<EnemyUnit> enemies = GetAllEnemies();
-        foreach (var enemy in enemies)
+        List<EnemyUnit> firstWave = new List<EnemyUnit>();
+        List<EnemyUnit> secondWave = new List<EnemyUnit>();
+
+        // ======= LƯỢT 1: Di chuyển nếu tile đích còn chỗ =======
+        foreach (var enemy in allEnemies)
         {
             Vector2Int target = enemy.currentPosition + dir;
             Tile targetTile = GridManager.Instance.GetTileAtPosition(target);
+            if (targetTile == null || targetTile.IsObstacle)
+                continue;
 
-            if (targetTile != null && !targetTile.IsObstacle)
+            int enemyCount = targetTile.occupyingUnits.FindAll(u => u is EnemyUnit).Count;
+            if (enemyCount < 4 && targetTile.CanAccept(enemy))
             {
                 Vector3 worldPos = GridManager.Instance.GetWorldPosition(target);
                 enemy.MoveTo(worldPos, target);
+                firstWave.Add(enemy);
+            }
+            else
+            {
+                secondWave.Add(enemy); // tile đầy → thử lại sau
+            }
+        }
+
+        // ======= LƯỢT 2: Thử lại với các enemy bị từ chối =======
+        foreach (var enemy in secondWave)
+        {
+            Vector2Int target = enemy.currentPosition + dir;
+            Tile targetTile = GridManager.Instance.GetTileAtPosition(target);
+            if (targetTile == null || targetTile.IsObstacle)
+                continue;
+
+            int enemyCount = targetTile.occupyingUnits.FindAll(u => u is EnemyUnit).Count;
+            if (enemyCount < 4 && targetTile.CanAccept(enemy))
+            {
+                Vector3 worldPos = GridManager.Instance.GetWorldPosition(target);
+                enemy.MoveTo(worldPos, target);
+            }
+            else
+            {
+                Debug.LogWarning($"Enemy {enemy.name} không thể di chuyển đến {target} cả sau lượt 2.");
             }
         }
 
         yield break;
     }
+
+
 }

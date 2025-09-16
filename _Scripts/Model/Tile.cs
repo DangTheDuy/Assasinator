@@ -1,71 +1,91 @@
-
-using System;
-using System.Collections;
 using System.Collections.Generic;
-using Unity.VisualScripting;
 using UnityEngine;
-using UnityEngine.EventSystems;
 
 public class Tile : MonoBehaviour
 {
     public Vector2Int gridPosition;
     public bool IsObstacle;
     public List<Unit> occupyingUnits = new List<Unit>();
-    private Dictionary<Unit, int> unitSlots = new Dictionary<Unit, int>();
-    public int MaxUnitsPerTile => 9;
+    private Dictionary<Unit, int> heroSlots = new Dictionary<Unit, int>();
+    private Dictionary<Unit, int> enemySlots = new Dictionary<Unit, int>();
+    public int MaxUnitsPerTile => 8;
     private bool detectionCheckedThisFrame = false;
-
     private GameObject overlay;
 
+    private static readonly int[] HeroSlotPool = { 7, 8, 9, 4 };
+    private static readonly int[] EnemySlotPool = { 1, 2, 3, 6 };
+
+// ======================================== INIT ============================================= 
     public void Init(int x, int y)
     {
         gridPosition = new Vector2Int(x, y);
 
-        // tạo overlay highlight (dán lên trên tile)
         overlay = new GameObject("Overlay");
         overlay.transform.SetParent(transform);
         overlay.transform.localPosition = Vector3.zero;
         overlay.transform.localScale = Vector3.one;
 
         SpriteRenderer overlaySr = overlay.AddComponent<SpriteRenderer>();
-        overlaySr.sprite = GetComponent<SpriteRenderer>().sprite; // dùng sprite gốc
-        overlaySr.color = new Color(0f, 1f, 1f, 0.3f); // xanh cyan mờ mờ
-        overlaySr.sortingOrder = GetComponent<SpriteRenderer>().sortingOrder + 1; // luôn hiển thị trên tile
+        overlaySr.sprite = GetComponent<SpriteRenderer>().sprite;
+        overlaySr.color = new Color(0f, 1f, 1f, 0.3f);
+        overlaySr.sortingOrder = GetComponent<SpriteRenderer>().sortingOrder + 1;
 
-        overlay.SetActive(false); // mặc định ẩn
+        overlay.SetActive(false);
     }
-
-    public void Highlight(bool active)
-    {
-        if (overlay != null)
-        {
-            overlay.SetActive(active);
-
-           /* SpriteRenderer sr = overlay.GetComponent<SpriteRenderer>();
-            if (active)
-            {
-                bool hasEnemy = occupyingUnits.Exists(u => u is EnemyUnit);
-                sr.color = hasEnemy ? new Color(1f, 0f, 0f, 0.3f) : new Color(0f, 1f, 1f, 0.3f); 
-            }*/
-        }
-    }
-
 
     void LateUpdate()
     {
         detectionCheckedThisFrame = false;
     }
 
-    public bool IsOccupied => occupyingUnits.Count >= MaxUnitsPerTile;
+// ======================================== ON MOUSE DOWN ======================================== 
+    private void OnMouseDown()
+    {
+        if (TargetingSystem.Instance != null && TargetingSystem.Instance.IsTargeting) return;
+        if (SkillBarUI.IsEnemyInteractionOpen) return;
 
+        Unit selected = Unit.GetSelectedUnit();
+        if (selected == null || selected.currentPosition == gridPosition) return;
+
+        if (!IsObstacle && occupyingUnits.Count < MaxUnitsPerTile)
+        {
+            int distance = GridManager.Instance.GetDistance(selected.currentPosition, gridPosition);
+            if (distance <= selected.data.moveRange)
+            {
+                Vector3 basePos = GridManager.Instance.GetWorldPosition(gridPosition);
+                selected.MoveTo(basePos, gridPosition);
+            }
+            else
+            {
+                Debug.Log($"{selected.name} không thể đi xa hơn {selected.data.moveRange} ô!");
+            }
+        }
+    }
+
+// ======================================== SET/ UNOCCUPIED ======================================== 
     public void SetOccupied(Unit unit)
     {
         if (unit == null) return;
-        // tránh add duplicate và chỉ add khi còn chỗ
-        if (!occupyingUnits.Contains(unit) && occupyingUnits.Count < MaxUnitsPerTile)
+
+        bool isHero = unit is HeroUnit;
+        int sameTypeCount = occupyingUnits.FindAll(u => isHero ? u is HeroUnit : u is EnemyUnit).Count;
+
+        if (sameTypeCount >= 4)
+        {
+            Debug.LogWarning($"Tile  đã đủ Không thể thêm {unit.name}");
+            return;
+        }
+
+        if (!occupyingUnits.Contains(unit))
             occupyingUnits.Add(unit);
-        int slot = FindAvailableSlot();
-        unitSlots[unit] = slot;
+
+        int slot = FindAvailableSlot(isHero);
+        if (slot == -1) return;
+
+        if (isHero)
+            heroSlots[unit] = slot;
+        else
+            enemySlots[unit] = slot;
 
         bool hasHero = occupyingUnits.Exists(u => u is HeroUnit);
         bool hasEnemy = occupyingUnits.Exists(u => u is EnemyUnit);
@@ -80,108 +100,98 @@ public class Tile : MonoBehaviour
     public void SetUnoccupied(Unit unit)
     {
         if (unit == null) return;
-        // remove tất cả các entry trùng (phòng duplicate bug)
         occupyingUnits.RemoveAll(u => u == unit || u == null);
-        if (unitSlots.ContainsKey(unit))
-            unitSlots.Remove(unit);
+        heroSlots.Remove(unit);
+        enemySlots.Remove(unit);
     }
-
+// ======================================== LOCAL OFFSET ========================================
     public Vector3 GetLocalOffsetForUnit(Unit unit)
     {
-        if (unit == null || !unitSlots.ContainsKey(unit))
-            return Vector3.zero;
+        if (unit == null) return Vector3.zero;
+        int index = -1;
+        bool isHero = unit is HeroUnit;
+        if (isHero && heroSlots.ContainsKey(unit))
+            index = heroSlots[unit];
+        else if (!isHero && enemySlots.ContainsKey(unit))
+            index = enemySlots[unit];
 
-        int index = unitSlots[unit];
-        int row = index / 3;
-        int col = index % 3;
-        float spacing = 1f;
+        if (index == -1 || index == 5) return Vector3.zero;
+        float baseSize = GetComponent<SpriteRenderer>().bounds.size.x;
+        float spacing = baseSize * 0.3f; // 35% chiều rộng tile
 
-        // Đảo chiều row để bắt đầu từ trên
-        int flippedRow = 2 - row;
-
-        return new Vector3((col - 1) * spacing, (flippedRow - 1) * spacing, 0);
+        int row = (index - 1) / 3;
+        int col = (index - 1) % 3;
+        float x = (col - 1) * spacing;
+        float y = (1 - row) * spacing;
+        return new Vector3(x, y, 0);
     }
 
-
-    private int FindAvailableSlot()
+    private int FindAvailableSlot(bool isHero)
     {
-        for (int i = 0; i < MaxUnitsPerTile; i++)
-        {
-            bool used = false;
-            foreach (var kv in unitSlots)
-            {
-                if (kv.Value == i) { used = true; break; }
-            }
-            if (!used) return i;
-        }
-        return 0;
-    }
+        int[] pool = isHero ? HeroSlotPool : EnemySlotPool;
+        var dict = isHero ? heroSlots : enemySlots;
 
-    private void OnMouseDown()
+        foreach (int slot in pool)
+        {
+            if (!dict.ContainsValue(slot))
+                return slot;
+        }
+        return -1;
+    }
+// =========================================== CHECK DETECT ============================================
+    public void CheckDetection()
+        {
+            int highestDetectChance = 0;
+            foreach (var unit in occupyingUnits)
+            {
+                if (unit is EnemyUnit enemy)
+                    highestDetectChance = Mathf.Max(highestDetectChance, enemy.DetectionChance);
+            }
+
+            if (highestDetectChance > 0)
+            {
+                int roll = Random.Range(0, 100);
+                if (roll < highestDetectChance)
+                {
+                    Debug.Log($"Hero bị phát hiện! (roll {roll}/{highestDetectChance})");
+                    foreach (var unit in occupyingUnits)
+                    {
+                        if (unit is HeroUnit hero)
+                            hero.IsDetected = true;
+                    }
+                }
+                else
+                {
+                    Debug.Log($"Hero chưa bị phát hiện (roll {roll}/{highestDetectChance})");
+                }
+            }
+        }
+// =============================================== HELPER ===========================================
+    public void Highlight(bool active)
     {
-        // Đang target thì không di chuyển
-        if (TargetingSystem.Instance != null && TargetingSystem.Instance.IsTargeting) return;
-        if (SkillBarUI.IsEnemyInteractionOpen) return;
-
-        Unit selected = Unit.GetSelectedUnit();
-        if (selected == null) return;
-        if (selected.currentPosition == gridPosition) return;
-
-        if (!IsObstacle && occupyingUnits.Count < MaxUnitsPerTile)
-        {
-            int distance = GridManager.Instance.GetDistance(selected.currentPosition, gridPosition);
-
-            if (distance <= selected.data.moveRange)  // 🔥 kiểm tra range
-            {
-                Vector3 basePos = GridManager.Instance.GetWorldPosition(gridPosition);
-                selected.MoveTo(basePos, gridPosition);
-            }
-            else
-            {
-                Debug.Log($"{selected.name} không thể đi xa hơn {selected.data.moveRange} ô!");
-            }
-        }
+        if (overlay != null)
+            overlay.SetActive(active);
     }
 
+    public bool CanAccept(Unit unit)
+    {
+        if (unit is EnemyUnit)
+            return occupyingUnits.FindAll(u => u is EnemyUnit).Count < 4;
+        if (unit is HeroUnit)
+            return occupyingUnits.FindAll(u => u is HeroUnit).Count < 4;
+        return true;
+    }
+    
     public void PlaceUnit(Unit unit)
     {
         if (unit == null) return;
 
-        SetOccupied(unit); // gán slot cho unit này
+        SetOccupied(unit);
         Vector3 offset = GetLocalOffsetForUnit(unit);
         Vector3 basePos = GridManager.Instance.GetWorldPosition(gridPosition);
 
         unit.transform.position = new Vector3(basePos.x + offset.x, basePos.y + offset.y, -1f);
         unit.currentPosition = gridPosition;
     }
-    
-    public void CheckDetection()
-    {
-        // lấy % phát hiện cao nhất trong tile
-        int highestDetectChance = 0;
-        foreach (var unit in occupyingUnits)
-        {
-            if (unit is EnemyUnit enemy)
-            {
-                highestDetectChance = Mathf.Max(highestDetectChance, enemy.DetectionChance);
-            }
-        }
 
-        if (highestDetectChance > 0)
-        {
-            int roll = UnityEngine.Random.Range(0, 100);
-            if (roll < highestDetectChance)
-            {
-                Debug.Log($"Hero bị phát hiện! (roll {roll}/{highestDetectChance})");
-                foreach (var unit in occupyingUnits)
-                {
-                    if (unit is HeroUnit hero)
-                    {
-                        hero.IsDetected = true;
-                    }
-                }
-            }
-            else Debug.Log($"Hero chưa bị phát hiện (roll {roll}/{highestDetectChance})");
-        }
-    }
 }
