@@ -12,8 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0f899dcc0fd5c4245be472fe06d97e4b, type: 3}
   m_Name: AssassinateSkill
   m_EditorClassIdentifier: 
-  skillName: 
+  skillName: Assassinate
   icon: {fileID: 21300000, guid: b766d5d87c4fc8542b6102f973e24996, type: 3}
   description: 
+  apCost: 1
   requireTarget: 0
   type: 0

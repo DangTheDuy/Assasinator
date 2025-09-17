@@ -11,6 +11,7 @@ public class EnemyUnit : Unit
     private GameObject highlightOverlay;
     private GameObject arrowInstance;
 
+// ================================= ON MOUSE DOWN ================================================
     private void OnMouseDown()
     {
         if (TargetingSystem.Instance != null && TargetingSystem.Instance.IsTargeting)
@@ -24,22 +25,17 @@ public class EnemyUnit : Unit
         SkillBarUI skillBar = FindObjectOfType<SkillBarUI>();
         if (skillBar == null) return;
 
-        // Nếu đã chọn enemy này rồi → hủy chọn enemy, hiện lại skill bar của Hero
         if (SelectedEnemy == this)
         {
-            SelectedEnemy = null;
-            SetHighlight(false);
-            skillBar.Hide();
+            OnDeselect();
 
-            // Hiện lại skill bar của Hero
+            skillBar.Hide();
             skillBar.Setup(SelectedHero, SelectedHero.GetSkills(), null);
             skillBar.GetComponent<WorldSpaceUIFollow>().target = SelectedHero.transform;
             skillBar.Show();
-
             return;
         }
 
-        // Nếu chọn enemy mới
         if (SelectedEnemy == null)
         {
             SelectedEnemy = this;
@@ -52,7 +48,33 @@ public class EnemyUnit : Unit
         }
     }
 
+// =========================================== ON DESELECT =============================================
+    public override void OnDeselect()
+    {
+        if (SelectedEnemy == this)
+            SelectedEnemy = null;
 
+        SetHighlight(false);
+
+        if (arrowInstance != null)
+        {
+            Destroy(arrowInstance);
+            arrowInstance = null;
+        }
+
+        if (highlightOverlay != null)
+        {
+            Destroy(highlightOverlay);
+            highlightOverlay = null;
+        }
+    }
+
+// ========================================= ON DESTROY =================================================
+    private void OnDestroy()
+    {
+        OnDeselect();
+    }
+// ========================================= SET HIGHLIGHT =============================================
     public void SetHighlight(bool active)
     {
         if (highlightOverlay == null)
@@ -72,7 +94,6 @@ public class EnemyUnit : Unit
 
         highlightOverlay.SetActive(active);
 
-        //  Hiện hoặc ẩn arrow dùng ArrowFollowUnit
         if (active)
         {
             if (arrowInstance == null)
@@ -89,9 +110,8 @@ public class EnemyUnit : Unit
                 arrowInstance.SetActive(false);
         }
     }
-
-
-
+  
+// ============================================== GET SKILL ==========================================
     private List<SkillData> GetInteractionSkills()
     {
         return new List<SkillData>
@@ -100,5 +120,5 @@ public class EnemyUnit : Unit
             Resources.Load<SkillData>("Skills/FightSkill")
         };
     }
-
 }
+

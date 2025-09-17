@@ -4,5 +4,6 @@ using UnityEngine;
 
 public class MountainTile : Tile
 {
-    [SerializeField] protected Color baseColor;
+    public override int MovementCost => 2; // tốn 2 AP để đi qua
 }
+

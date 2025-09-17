@@ -72,10 +72,6 @@ public class EnemySystem : Singleton<EnemySystem>
                 Vector3 worldPos = GridManager.Instance.GetWorldPosition(target);
                 enemy.MoveTo(worldPos, target);
             }
-            else
-            {
-                Debug.LogWarning($"Enemy {enemy.name} không thể di chuyển đến {target} cả sau lượt 2.");
-            }
         }
 
         yield break;

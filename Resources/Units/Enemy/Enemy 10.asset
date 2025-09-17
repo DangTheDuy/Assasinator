@@ -15,10 +15,9 @@ MonoBehaviour:
   unitName: Enemy
   Image: {fileID: 21300000, guid: 60e47b1eb55ffdc4e8b9eda92b0f5490, type: 3}
   moveRange: 0
-  attackRange: 0
   maxHealth: 0
   attackPower: 0
   defensePower: 0
-  teamID: 0
+  maxAP: 0
   skills: []
-  detectionChance: 10
+  detectionChance: 6

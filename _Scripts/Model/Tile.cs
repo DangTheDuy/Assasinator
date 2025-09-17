@@ -4,13 +4,16 @@ using UnityEngine;
 public class Tile : MonoBehaviour
 {
     public Vector2Int gridPosition;
-    public bool IsObstacle;
+    public int MaxUnitsPerTile => 8;
+    public virtual bool IsObstacle { get; protected set; } = false;
+    public virtual int MovementCost => 1; // mặc định 1 AP
+    public virtual float DetectionModifier => 1f; // không giảm phát hiện
+    public virtual bool CanHide => false; 
+    private bool detectionCheckedThisFrame = false;
+    private GameObject overlay;
     public List<Unit> occupyingUnits = new List<Unit>();
     private Dictionary<Unit, int> heroSlots = new Dictionary<Unit, int>();
     private Dictionary<Unit, int> enemySlots = new Dictionary<Unit, int>();
-    public int MaxUnitsPerTile => 8;
-    private bool detectionCheckedThisFrame = false;
-    private GameObject overlay;
 
     private static readonly int[] HeroSlotPool = { 7, 8, 9, 4 };
     private static readonly int[] EnemySlotPool = { 1, 2, 3, 6 };

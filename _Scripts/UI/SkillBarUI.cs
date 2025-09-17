@@ -45,13 +45,15 @@ public class SkillBarUI : Singleton<SkillBarUI>
                 if (skill.skillName == "Fight")
                 {
                     isInteractable = hero != null && forcedTarget != null &&
-                                    hero.currentPosition == forcedTarget.currentPosition;
+                            hero.currentPosition == forcedTarget.currentPosition
+                            && hero.HasEnoughAP(skill.apCost);;
                 }
                 else if (skill.skillName == "Assassinate")
                 {
                     isInteractable = hero != null && forcedTarget != null &&
                                     !hero.IsDetected &&
-                                    hero.currentPosition == forcedTarget.currentPosition;
+                                    hero.currentPosition == forcedTarget.currentPosition
+                                    && hero.HasEnoughAP(skill.apCost);
                 }
                 else
                 {
