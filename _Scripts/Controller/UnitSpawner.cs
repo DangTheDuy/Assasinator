@@ -24,34 +24,34 @@ public class UnitSpawner : MonoBehaviour
         GameObject heroBasePrefab = unitManager.GetHeroBasePrefab();
         GameObject enemyBasePrefab = unitManager.GetEnemyBasePrefab();
 
-    // SPAWN HERO
+        // SPAWN HERO
         Vector2Int heroSpawnCell = new Vector2Int(1, 1);
         Tile heroTile = GridManager.Instance.GetTileAtPosition(heroSpawnCell);
 
         for (int i = 0; i < Mathf.Min(playerUnitsToSpawn, playerUnitDataList.Count); i++)
         {
             UnitData unitData = playerUnitDataList[i];
-            GameObject unitObject = Instantiate(heroBasePrefab, Vector3.zero, Quaternion.identity);
+            GameObject unitObject = Instantiate(heroBasePrefab, Vector3.zero, Quaternion.identity, heroContainer);
             HeroUnit hero = unitObject.GetComponent<HeroUnit>();
             if (hero != null)
             {
                 hero.Setup(unitData);
-                heroTile.PlaceUnit(hero);         
+                heroTile.PlaceUnit(hero);
             }
         }
 
         Vector3 heroWorldPos = GridManager.Instance.GetWorldPosition(heroSpawnCell);
         Camera.main.transform.position = new Vector3(heroWorldPos.x, heroWorldPos.y, -10f);
 
-    // SPAWN ENEMY
-        List<Vector2Int> availableCells = GridManager.Instance.GetAvailableCells();
-        availableCells.Remove(heroSpawnCell);
+        // SPAWN ENEMY
+        List<Vector2Int> spawnCells = GridManager.Instance.GetEnemySpawnCells();
+        spawnCells.Remove(heroSpawnCell);
 
         int enemyIndex = 0;
-        while (enemyIndex < enemyUnitsToSpawn && availableCells.Count > 0)
+        while (enemyIndex < enemyUnitsToSpawn && spawnCells.Count > 0)
         {
-            Vector2Int groupCell = availableCells[0];
-            availableCells.RemoveAt(0);
+            Vector2Int groupCell = spawnCells[Random.Range(0, spawnCells.Count)];
+            spawnCells.Remove(groupCell);
 
             Tile groupTile = GridManager.Instance.GetTileAtPosition(groupCell);
             if (groupTile == null || groupTile.IsObstacle) continue;
@@ -61,15 +61,16 @@ public class UnitSpawner : MonoBehaviour
             for (int i = 0; i < groupSize && enemyIndex < enemyUnitDataList.Count; i++)
             {
                 UnitData unitData = enemyUnitDataList[enemyIndex % enemyUnitDataList.Count];
-                GameObject unitObject = Instantiate(enemyBasePrefab, Vector3.zero, Quaternion.identity);
+                GameObject unitObject = Instantiate(enemyBasePrefab, Vector3.zero, Quaternion.identity, enemyContainer);
                 EnemyUnit enemy = unitObject.GetComponent<EnemyUnit>();
                 if (enemy != null)
                 {
                     enemy.Setup(unitData);
-                    groupTile.PlaceUnit(enemy); 
+                    groupTile.PlaceUnit(enemy);
                 }
                 enemyIndex++;
             }
         }
     }
+
 }

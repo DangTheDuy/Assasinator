@@ -3,6 +3,7 @@ using UnityEngine;
 
 public class Tile : MonoBehaviour
 {
+    public TileData tileData;
     public Vector2Int gridPosition;
     public int MaxUnitsPerTile => 8;
     public virtual bool IsObstacle { get; protected set; } = false;
@@ -19,9 +20,10 @@ public class Tile : MonoBehaviour
     private static readonly int[] EnemySlotPool = { 1, 2, 3, 6 };
 
 // ======================================== INIT ============================================= 
-    public void Init(int x, int y)
+    public void Init(int x, int y, TileData data)
     {
         gridPosition = new Vector2Int(x, y);
+        tileData = data;
 
         overlay = new GameObject("Overlay");
         overlay.transform.SetParent(transform);

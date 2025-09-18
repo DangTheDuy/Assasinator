@@ -9,17 +9,29 @@ PrefabInstance:
     m_TransformParent: {fileID: 0}
     m_Modifications:
     - target: {fileID: 1302031596160963977, guid: b9f0ece442226574a9e8cb00648d6df7, type: 3}
+      propertyPath: m_FlipX
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1302031596160963977, guid: b9f0ece442226574a9e8cb00648d6df7, type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: 21300000, guid: 98f2ff53db44c3344923f5831735a6e6, type: 3}
+    - target: {fileID: 1302031596160963977, guid: b9f0ece442226574a9e8cb00648d6df7, type: 3}
       propertyPath: m_Color.b
-      value: 0.5849056
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 1302031596160963977, guid: b9f0ece442226574a9e8cb00648d6df7, type: 3}
       propertyPath: m_Color.g
-      value: 0.5849056
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 1302031596160963977, guid: b9f0ece442226574a9e8cb00648d6df7, type: 3}
       propertyPath: m_Color.r
-      value: 0.5849056
+      value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 1302031596160963977, guid: b9f0ece442226574a9e8cb00648d6df7, type: 3}
+      propertyPath: m_Materials.Array.data[0]
+      value: 
+      objectReference: {fileID: 2100000, guid: 7962664502237984cb87bfc0b88ad148, type: 2}
     - target: {fileID: 4507745000056549346, guid: b9f0ece442226574a9e8cb00648d6df7, type: 3}
       propertyPath: m_Name
       value: MountainTile
@@ -30,6 +42,10 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8092256690449533157, guid: b9f0ece442226574a9e8cb00648d6df7, type: 3}
       propertyPath: m_LocalScale.y
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8092256690449533157, guid: b9f0ece442226574a9e8cb00648d6df7, type: 3}
+      propertyPath: m_LocalScale.z
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 8092256690449533157, guid: b9f0ece442226574a9e8cb00648d6df7, type: 3}
@@ -78,14 +94,65 @@ PrefabInstance:
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 4507745000056549346, guid: b9f0ece442226574a9e8cb00648d6df7, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 6824848780115827446}
+      addedObject: {fileID: 965956021925058216}
+    - targetCorrespondingSourceObject: {fileID: 4507745000056549346, guid: b9f0ece442226574a9e8cb00648d6df7, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 491963516629795749}
+    - targetCorrespondingSourceObject: {fileID: 4507745000056549346, guid: b9f0ece442226574a9e8cb00648d6df7, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 4635551725186450037}
   m_SourcePrefab: {fileID: 100100000, guid: b9f0ece442226574a9e8cb00648d6df7, type: 3}
 --- !u!1 &6542033830992393276 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 4507745000056549346, guid: b9f0ece442226574a9e8cb00648d6df7, type: 3}
   m_PrefabInstance: {fileID: 7225817976527281118}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &6824848780115827446
+--- !u!61 &965956021925058216
+BoxCollider2D:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6542033830992393276}
+  m_Enabled: 1
+  m_Density: 1
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_ForceSendLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ForceReceiveLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ContactCaptureLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_CallbackLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_IsTrigger: 0
+  m_UsedByEffector: 0
+  m_UsedByComposite: 0
+  m_Offset: {x: 0, y: 0}
+  m_SpriteTilingProperty:
+    border: {x: 0, y: 0, z: 0, w: 0}
+    pivot: {x: 0.5, y: 0.5}
+    oldSize: {x: 1, y: 1}
+    newSize: {x: 1, y: 1}
+    adaptiveTilingThreshold: 0.5
+    drawMode: 0
+    adaptiveTiling: 0
+  m_AutoTiling: 0
+  serializedVersion: 2
+  m_Size: {x: 1, y: 1}
+  m_EdgeRadius: 0
+--- !u!114 &491963516629795749
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -94,10 +161,23 @@ MonoBehaviour:
   m_GameObject: {fileID: 6542033830992393276}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b1661a6ba844d8b4a88b99a889740789, type: 3}
+  m_Script: {fileID: 11500000, guid: e19747de3f5aca642ab2be37e372fb86, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_EffectColor: {r: 0, g: 0, b: 0, a: 0.5}
+  m_EffectDistance: {x: 1, y: -1}
+  m_UseGraphicAlpha: 1
+--- !u!114 &4635551725186450037
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6542033830992393276}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 01f69fe0795587f45b883574bc86b44f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   gridPosition: {x: 0, y: 0}
-  IsObstacle: 0
   occupyingUnits: []
-  baseColor: {r: 1, g: 0.48641592, b: 0, a: 0}

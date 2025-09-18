@@ -1342,9 +1342,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ac76cdcf2c2231c46a831a41566437ca, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  width: 3
-  height: 3
-  grassTile: {fileID: -1220491774181552447, guid: f7fe28f5c95a0974ca72ada8a482278e, type: 3}
+  grassTilePrefab: {fileID: 6542033830992393276, guid: f7fe28f5c95a0974ca72ada8a482278e, type: 3}
+  forestTilePrefab: {fileID: 0}
+  mountainTilePrefab: {fileID: 6542033830992393276, guid: 4f6903189fe1c8c42824d0fde67cc961, type: 3}
+  houseTilePrefab: {fileID: 0}
+  obstacleTilePrefab: {fileID: 0}
+  tileSize: 4
 --- !u!1001 &6900903729196173347
 PrefabInstance:
   m_ObjectHideFlags: 0

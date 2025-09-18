@@ -11,6 +11,7 @@ public class GridManager : MonoBehaviour
     [SerializeField] private GameObject mountainTilePrefab;
     [SerializeField] private GameObject houseTilePrefab;
     [SerializeField] private GameObject obstacleTilePrefab;
+    [SerializeField] private GameObject linePrefab;
 
     [Header("Grid Settings")]
     [SerializeField] private float tileSize = 4f;
@@ -47,11 +48,31 @@ public class GridManager : MonoBehaviour
             if (tile != null)
             {
                 tile.name = $"Tile {data.x}, {data.y}";
-                tile.transform.localScale = new Vector3(tileSize, tileSize, 1);
-                tile.Init(data.x, data.y);
+                float shrinkFactor = 0.99f; // hoặc 0.9f để lộ viền rõ hơn
+                tile.transform.localScale = new Vector3(tileSize * shrinkFactor, tileSize * shrinkFactor, 1);
+                tile.Init(data.x, data.y, data);
                 tiles[gridPos] = tile;
             }
+            DrawGridLineAround(tileObj.transform.position);
         }
+    }
+
+    private void DrawGridLineAround(Vector3 center)
+    {
+        float half = tileSize / 2f;
+        Vector3[] corners = new Vector3[]
+        {
+            center + new Vector3(-half, half, 0),
+            center + new Vector3(half, half, 0),
+            center + new Vector3(half, -half, 0),
+            center + new Vector3(-half, -half, 0),
+            center + new Vector3(-half, half, 0)
+        };
+
+        GameObject lineObj = Instantiate(linePrefab, center, Quaternion.identity);
+        LineRenderer lr = lineObj.GetComponent<LineRenderer>();
+        lr.positionCount = corners.Length;
+        lr.SetPositions(corners);
     }
 
     private GameObject GetTilePrefabByType(string type)
@@ -103,6 +124,26 @@ public class GridManager : MonoBehaviour
         return availableCells;
     }
 
+    public List<Vector2Int> GetEnemySpawnCells()
+    {
+        List<Vector2Int> spawnCells = new List<Vector2Int>();
+
+        foreach (var kv in tiles)
+        {
+            Tile tile = kv.Value;
+            Vector2Int pos = kv.Key;
+
+            // Kiểm tra tile có dữ liệu JSON và được đánh dấu là vùng spawn
+            if (tile.tileData != null && tile.tileData.isEnemySpawnZone && !tile.IsObstacle)
+            {
+                spawnCells.Add(pos);
+            }
+        }
+
+        return spawnCells;
+    }
+
+
     // ======================= POSITION CONVERSION ===========================
     public Vector2Int GetCellPosition(Vector3 worldPosition)
     {
@@ -120,5 +161,6 @@ public class GridManager : MonoBehaviour
     {
         return Mathf.Abs(from.x - to.x) + Mathf.Abs(from.y - to.y);
     }
+
 }
 
