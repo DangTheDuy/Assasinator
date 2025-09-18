@@ -77,10 +77,16 @@ public class EnemyUnit : Unit
 // ========================================= SET HIGHLIGHT =============================================
     public void SetHighlight(bool active)
     {
+        if (this == null || gameObject == null)
+        {
+            return;
+        }
+
         if (highlightOverlay == null)
         {
             highlightOverlay = new GameObject("HighlightOverlay");
             highlightOverlay.transform.SetParent(icon.transform);
+            highlightOverlay.transform.SetSiblingIndex(icon.transform.GetSiblingIndex() + 1);
             highlightOverlay.transform.localPosition = Vector3.zero;
             highlightOverlay.transform.localScale = Vector3.one;
 
@@ -88,10 +94,7 @@ public class EnemyUnit : Unit
             overlayImage.sprite = icon.sprite;
             overlayImage.color = new Color(1f, 0f, 0f, 0.5f);
             overlayImage.raycastTarget = false;
-
-            highlightOverlay.transform.SetSiblingIndex(icon.transform.GetSiblingIndex() + 1);
         }
-
         highlightOverlay.SetActive(active);
 
         if (active)
@@ -101,7 +104,6 @@ public class EnemyUnit : Unit
                 arrowInstance = Instantiate(Resources.Load<GameObject>("Prefabs/ArrowUI"));
                 arrowInstance.transform.Find("ArrowContainer").GetComponent<ArrowFollowUnit>().target = transform;
             }
-
             arrowInstance.SetActive(true);
         }
         else

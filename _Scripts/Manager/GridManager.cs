@@ -1,94 +1,95 @@
-
-using System.Collections;
 using System.Collections.Generic;
-using Unity.Mathematics;
-using Unity.VisualScripting;
 using UnityEngine;
 
 public class GridManager : MonoBehaviour
 {
     public static GridManager Instance;
-    [SerializeField] private int width, height;
-    [SerializeField] private Tile grassTile;
+
+    [Header("Tile Prefabs")]
+    [SerializeField] private GameObject grassTilePrefab;
+    [SerializeField] private GameObject forestTilePrefab;
+    [SerializeField] private GameObject mountainTilePrefab;
+    [SerializeField] private GameObject houseTilePrefab;
+    [SerializeField] private GameObject obstacleTilePrefab;
+
+    [Header("Grid Settings")]
+    [SerializeField] private float tileSize = 4f;
+
     public Dictionary<Vector2Int, Tile> tiles;
 
-    private float tileSize = 4f;
-
-    void Awake()
+    private void Awake()
     {
         Instance = this;
-        GenerateGrid();
+        GenerateGridFromJson();
     }
 
-    void Start()
-    {
-
-    }
-
-   public void GenerateGrid()
+    // ======================= JSON MAP LOADING ===========================
+    public void GenerateGridFromJson()
     {
         tiles = new Dictionary<Vector2Int, Tile>();
-        float tileScale = 4f;
 
-        for (int x = 0; x < width; x++)
+        TextAsset jsonFile = Resources.Load<TextAsset>("MapData/map");
+        if (jsonFile == null)
         {
-            for (int y = 0; y < height; y++)
+            Debug.LogError("Không tìm thấy file map.json trong Resources/MapData/");
+            return;
+        }
+
+        TileDataList tileList = JsonUtility.FromJson<TileDataList>(jsonFile.text);
+
+        foreach (TileData data in tileList.tiles)
+        {
+            Vector2Int gridPos = new Vector2Int(data.x, data.y);
+            GameObject prefab = GetTilePrefabByType(data.type);
+            var tileObj = Instantiate(prefab, GetWorldPosition(gridPos), Quaternion.identity);
+            Tile tile = tileObj.GetComponent<Tile>();
+
+            if (tile != null)
             {
-                Vector2Int gridPos = new Vector2Int(x, y);
-                var spawnedTileObject = Instantiate(grassTile, new Vector3(x * tileScale, y * tileScale), quaternion.identity);
-                Tile spawnedTile = spawnedTileObject.GetComponent<Tile>();
-
-                if (spawnedTile != null)
-                {
-                    spawnedTile.name = $"Tile {x}, {y}";
-                    spawnedTile.transform.localScale = new Vector3(tileScale, tileScale, 1);
-                    spawnedTile.Init(x, y);
-
-                    // 🔥 Thêm caro: đổi màu dựa theo x+y
-                    SpriteRenderer sr = spawnedTile.GetComponent<SpriteRenderer>();
-                    if ((x + y) % 2 == 0)
-                    {
-                        sr.color = new Color(0.8f, 0.8f, 0.8f); // màu sáng
-                    }
-                    else
-                    {
-                        sr.color = new Color(0.4f, 0.4f, 0.4f); // màu tối
-                    }
-
-                    tiles[gridPos] = spawnedTile;
-                }
+                tile.name = $"Tile {data.x}, {data.y}";
+                tile.transform.localScale = new Vector3(tileSize, tileSize, 1);
+                tile.Init(data.x, data.y);
+                tiles[gridPos] = tile;
             }
         }
     }
 
-    public Tile GetTileAtPosition(Vector2Int position)
+    private GameObject GetTilePrefabByType(string type)
     {
-        if (tiles.ContainsKey(position))
+        switch (type)
         {
-            return tiles[position];
+            case "grass": return grassTilePrefab;
+            case "forest": return forestTilePrefab;
+            case "mountain": return mountainTilePrefab;
+            case "house": return houseTilePrefab;
+            case "obstacle": return obstacleTilePrefab;
+            default: return grassTilePrefab;
         }
-        return null;
     }
 
-     public bool IsCellAvailableForMovement(Vector2Int position)
+    // ======================= TILE ACCESS ===========================
+    public Tile GetTileAtPosition(Vector2Int position)
+    {
+        tiles.TryGetValue(position, out Tile tile);
+        return tile;
+    }
+
+    public bool IsCellAvailableForMovement(Vector2Int position)
     {
         Tile tile = GetTileAtPosition(position);
         return tile != null && !tile.IsObstacle && tile.occupyingUnits.Count < tile.MaxUnitsPerTile;
     }
 
-
     public void SetCellOccupied(Vector2Int position, Unit unit)
     {
         Tile tile = GetTileAtPosition(position);
-        if (tile != null)
-        {
-            tile.SetOccupied(unit);
-        }
+        tile?.SetOccupied(unit);
     }
 
     public void SetCellFree(Vector2Int position)
     {
         Tile tile = GetTileAtPosition(position);
+        tile?.SetUnoccupied(unit: null); // hoặc truyền unit nếu cần
     }
 
     public List<Vector2Int> GetAvailableCells()
@@ -97,13 +98,12 @@ public class GridManager : MonoBehaviour
         foreach (var cell in tiles.Keys)
         {
             if (IsCellAvailableForMovement(cell))
-            {
                 availableCells.Add(cell);
-            }
         }
         return availableCells;
     }
 
+    // ======================= POSITION CONVERSION ===========================
     public Vector2Int GetCellPosition(Vector3 worldPosition)
     {
         int x = Mathf.FloorToInt(worldPosition.x / tileSize);
@@ -118,6 +118,7 @@ public class GridManager : MonoBehaviour
 
     public int GetDistance(Vector2Int from, Vector2Int to)
     {
-        return Mathf.Abs(from.x - to.x) + Mathf.Abs(from.y - to.y); 
+        return Mathf.Abs(from.x - to.x) + Mathf.Abs(from.y - to.y);
     }
 }
+
