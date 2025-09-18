@@ -16,48 +16,72 @@ public class GridManager : MonoBehaviour
     [Header("Grid Settings")]
     [SerializeField] private float tileSize = 4f;
 
-    public Dictionary<Vector2Int, Tile> tiles;
+    public Dictionary<Vector2Int, Tile> tiles = new Dictionary<Vector2Int, Tile>();
+
+    // Map-level data loaded from JSON
+    public int enemyUnitsToSpawn { get; private set; }
+    public int maxEnemySpawnTiles { get; private set; }
 
     private void Awake()
     {
         Instance = this;
-        GenerateGridFromJson();
+        LoadMapFromJson("map");
     }
 
-    // ======================= JSON MAP LOADING ===========================
-    public void GenerateGridFromJson()
+    // ======================= MAP LOADING ===========================
+    public void LoadMapFromJson(string fileName)
     {
-        tiles = new Dictionary<Vector2Int, Tile>();
+        tiles.Clear();
 
-        TextAsset jsonFile = Resources.Load<TextAsset>("MapData/map");
+        TextAsset jsonFile = Resources.Load<TextAsset>($"MapData/{fileName}");
         if (jsonFile == null)
         {
-            Debug.LogError("Không tìm thấy file map.json trong Resources/MapData/");
+            Debug.LogError($"❌ Không tìm thấy file: Resources/MapData/{fileName}.json");
             return;
         }
 
-        TileDataList tileList = JsonUtility.FromJson<TileDataList>(jsonFile.text);
+        TileDataList mapData = JsonUtility.FromJson<TileDataList>(jsonFile.text);
+        enemyUnitsToSpawn = mapData.enemyUnitsToSpawn;
+        maxEnemySpawnTiles = mapData.maxEnemySpawnTiles;
 
-        foreach (TileData data in tileList.tiles)
+        foreach (TileData data in mapData.tiles)
         {
-            Vector2Int gridPos = new Vector2Int(data.x, data.y);
-            GameObject prefab = GetTilePrefabByType(data.type);
-            var tileObj = Instantiate(prefab, GetWorldPosition(gridPos), Quaternion.identity);
-            Tile tile = tileObj.GetComponent<Tile>();
-
-            if (tile != null)
-            {
-                tile.name = $"Tile {data.x}, {data.y}";
-                float shrinkFactor = 0.99f; // hoặc 0.9f để lộ viền rõ hơn
-                tile.transform.localScale = new Vector3(tileSize * shrinkFactor, tileSize * shrinkFactor, 1);
-                tile.Init(data.x, data.y, data);
-                tiles[gridPos] = tile;
-            }
-            DrawGridLineAround(tileObj.transform.position);
+            CreateTile(data);
         }
     }
 
-    private void DrawGridLineAround(Vector3 center)
+    private void CreateTile(TileData data)
+    {
+        Vector2Int gridPos = new Vector2Int(data.x, data.y);
+        GameObject prefab = GetTilePrefabByType(data.type);
+        GameObject tileObj = Instantiate(prefab, GetWorldPosition(gridPos), Quaternion.identity);
+        Tile tile = tileObj.GetComponent<Tile>();
+
+        if (tile != null)
+        {
+            tile.name = $"Tile {data.x}, {data.y}";
+            tile.transform.localScale = Vector3.one * tileSize * 0.99f;
+            tile.Init(data.x, data.y, data);
+            tiles[gridPos] = tile;
+        }
+
+        DrawGridOutline(tileObj.transform.position);
+    }
+
+    private GameObject GetTilePrefabByType(string type)
+    {
+        return type switch
+        {
+            "grass" => grassTilePrefab,
+            "forest" => forestTilePrefab,
+            "mountain" => mountainTilePrefab,
+            "house" => houseTilePrefab,
+            "obstacle" => obstacleTilePrefab,
+            _ => grassTilePrefab
+        };
+    }
+
+    private void DrawGridOutline(Vector3 center)
     {
         float half = tileSize / 2f;
         Vector3[] corners = new Vector3[]
@@ -75,19 +99,6 @@ public class GridManager : MonoBehaviour
         lr.SetPositions(corners);
     }
 
-    private GameObject GetTilePrefabByType(string type)
-    {
-        switch (type)
-        {
-            case "grass": return grassTilePrefab;
-            case "forest": return forestTilePrefab;
-            case "mountain": return mountainTilePrefab;
-            case "house": return houseTilePrefab;
-            case "obstacle": return obstacleTilePrefab;
-            default: return grassTilePrefab;
-        }
-    }
-
     // ======================= TILE ACCESS ===========================
     public Tile GetTileAtPosition(Vector2Int position)
     {
@@ -103,46 +114,36 @@ public class GridManager : MonoBehaviour
 
     public void SetCellOccupied(Vector2Int position, Unit unit)
     {
-        Tile tile = GetTileAtPosition(position);
-        tile?.SetOccupied(unit);
+        GetTileAtPosition(position)?.SetOccupied(unit);
     }
 
     public void SetCellFree(Vector2Int position)
     {
-        Tile tile = GetTileAtPosition(position);
-        tile?.SetUnoccupied(unit: null); // hoặc truyền unit nếu cần
+        GetTileAtPosition(position)?.SetUnoccupied(null);
     }
 
     public List<Vector2Int> GetAvailableCells()
     {
-        List<Vector2Int> availableCells = new List<Vector2Int>();
-        foreach (var cell in tiles.Keys)
+        List<Vector2Int> available = new List<Vector2Int>();
+        foreach (var kv in tiles)
         {
-            if (IsCellAvailableForMovement(cell))
-                availableCells.Add(cell);
+            if (IsCellAvailableForMovement(kv.Key))
+                available.Add(kv.Key);
         }
-        return availableCells;
+        return available;
     }
 
     public List<Vector2Int> GetEnemySpawnCells()
     {
         List<Vector2Int> spawnCells = new List<Vector2Int>();
-
         foreach (var kv in tiles)
         {
             Tile tile = kv.Value;
-            Vector2Int pos = kv.Key;
-
-            // Kiểm tra tile có dữ liệu JSON và được đánh dấu là vùng spawn
             if (tile.tileData != null && tile.tileData.isEnemySpawnZone && !tile.IsObstacle)
-            {
-                spawnCells.Add(pos);
-            }
+                spawnCells.Add(kv.Key);
         }
-
         return spawnCells;
     }
-
 
     // ======================= POSITION CONVERSION ===========================
     public Vector2Int GetCellPosition(Vector3 worldPosition)
@@ -161,6 +162,4 @@ public class GridManager : MonoBehaviour
     {
         return Mathf.Abs(from.x - to.x) + Mathf.Abs(from.y - to.y);
     }
-
 }
-

@@ -1,15 +1,13 @@
-
 using System.Collections.Generic;
-using Unity.VisualScripting;
 using UnityEngine;
 
 public class UnitSpawner : MonoBehaviour
 {
     [SerializeField] private UnitManager unitManager;
-    [SerializeField] private int playerUnitsToSpawn ;
-    [SerializeField] private int enemyUnitsToSpawn ;
     [SerializeField] private Transform heroContainer;
     [SerializeField] private Transform enemyContainer;
+
+    private int totalEnemiesSpawned = 0;
 
     public void Start()
     {
@@ -28,7 +26,7 @@ public class UnitSpawner : MonoBehaviour
         Vector2Int heroSpawnCell = new Vector2Int(1, 1);
         Tile heroTile = GridManager.Instance.GetTileAtPosition(heroSpawnCell);
 
-        for (int i = 0; i < Mathf.Min(playerUnitsToSpawn, playerUnitDataList.Count); i++)
+        for (int i = 0; i < Mathf.Min(playerUnitDataList.Count, 1); i++)
         {
             UnitData unitData = playerUnitDataList[i];
             GameObject unitObject = Instantiate(heroBasePrefab, Vector3.zero, Quaternion.identity, heroContainer);
@@ -44,21 +42,37 @@ public class UnitSpawner : MonoBehaviour
         Camera.main.transform.position = new Vector3(heroWorldPos.x, heroWorldPos.y, -10f);
 
         // SPAWN ENEMY
-        List<Vector2Int> spawnCells = GridManager.Instance.GetEnemySpawnCells();
-        spawnCells.Remove(heroSpawnCell);
+        int enemyUnitsToSpawn = GridManager.Instance.enemyUnitsToSpawn;
+        int maxSpawnTiles = GridManager.Instance.maxEnemySpawnTiles;
+
+        List<Vector2Int> allSpawnCells = GridManager.Instance.GetEnemySpawnCells();
+        allSpawnCells.Remove(heroSpawnCell);
+
+        int usableTiles = Mathf.Min(maxSpawnTiles, allSpawnCells.Count);
+        List<Vector2Int> selectedTiles = new List<Vector2Int>();
+
+        while (selectedTiles.Count < usableTiles)
+        {
+            Vector2Int cell = allSpawnCells[Random.Range(0, allSpawnCells.Count)];
+            allSpawnCells.Remove(cell);
+            selectedTiles.Add(cell);
+        }
 
         int enemyIndex = 0;
-        while (enemyIndex < enemyUnitsToSpawn && spawnCells.Count > 0)
+        totalEnemiesSpawned = 0;
+
+        foreach (Vector2Int cell in selectedTiles)
         {
-            Vector2Int groupCell = spawnCells[Random.Range(0, spawnCells.Count)];
-            spawnCells.Remove(groupCell);
+            Tile tile = GridManager.Instance.GetTileAtPosition(cell);
+            if (tile == null || tile.IsObstacle || tile.tileData == null) continue;
 
-            Tile groupTile = GridManager.Instance.GetTileAtPosition(groupCell);
-            if (groupTile == null || groupTile.IsObstacle) continue;
+            int maxPerTile = tile.tileData.maxEnemyPerTile;
+            int availableSpace = tile.MaxUnitsPerTile - tile.occupyingUnits.Count;
+            if (maxPerTile <= 0 || availableSpace <= 0) continue;
 
-            int groupSize = Mathf.Min(Random.Range(3, 5), groupTile.MaxUnitsPerTile - groupTile.occupyingUnits.Count);
+            int groupSize = Mathf.Min(maxPerTile, availableSpace);
 
-            for (int i = 0; i < groupSize && enemyIndex < enemyUnitDataList.Count; i++)
+            for (int i = 0; i < groupSize && enemyIndex < enemyUnitsToSpawn; i++)
             {
                 UnitData unitData = enemyUnitDataList[enemyIndex % enemyUnitDataList.Count];
                 GameObject unitObject = Instantiate(enemyBasePrefab, Vector3.zero, Quaternion.identity, enemyContainer);
@@ -66,11 +80,13 @@ public class UnitSpawner : MonoBehaviour
                 if (enemy != null)
                 {
                     enemy.Setup(unitData);
-                    groupTile.PlaceUnit(enemy);
+                    tile.PlaceUnit(enemy);
+                    totalEnemiesSpawned++;
                 }
                 enemyIndex++;
             }
         }
-    }
 
+        Debug.Log($"✅ Total enemies spawned: {totalEnemiesSpawned} / {enemyUnitsToSpawn}");
+    }
 }
