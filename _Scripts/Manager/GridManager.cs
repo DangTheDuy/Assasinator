@@ -15,10 +15,13 @@ public class GridManager : MonoBehaviour
 
     [Header("Grid Settings")]
     [SerializeField] private float tileSize = 4f;
+    public float TileSize => tileSize;
+
+    public Vector2Int MapMin { get; private set; }
+    public Vector2Int MapMax { get; private set; }
 
     public Dictionary<Vector2Int, Tile> tiles = new Dictionary<Vector2Int, Tile>();
 
-    // Map-level data loaded from JSON
     public int enemyUnitsToSpawn { get; private set; }
     public int maxEnemySpawnTiles { get; private set; }
 
@@ -28,7 +31,6 @@ public class GridManager : MonoBehaviour
         LoadMapFromJson("map");
     }
 
-    // ======================= MAP LOADING ===========================
     public void LoadMapFromJson(string fileName)
     {
         tiles.Clear();
@@ -48,6 +50,8 @@ public class GridManager : MonoBehaviour
         {
             CreateTile(data);
         }
+
+        CalculateMapBounds();
     }
 
     private void CreateTile(TileData data)
@@ -99,7 +103,23 @@ public class GridManager : MonoBehaviour
         lr.SetPositions(corners);
     }
 
-    // ======================= TILE ACCESS ===========================
+    private void CalculateMapBounds()
+    {
+        int minX = int.MaxValue, minY = int.MaxValue;
+        int maxX = int.MinValue, maxY = int.MinValue;
+
+        foreach (var pos in tiles.Keys)
+        {
+            minX = Mathf.Min(minX, pos.x);
+            minY = Mathf.Min(minY, pos.y);
+            maxX = Mathf.Max(maxX, pos.x);
+            maxY = Mathf.Max(maxY, pos.y);
+        }
+
+        MapMin = new Vector2Int(minX, minY);
+        MapMax = new Vector2Int(maxX, maxY);
+    }
+
     public Tile GetTileAtPosition(Vector2Int position)
     {
         tiles.TryGetValue(position, out Tile tile);
@@ -145,7 +165,6 @@ public class GridManager : MonoBehaviour
         return spawnCells;
     }
 
-    // ======================= POSITION CONVERSION ===========================
     public Vector2Int GetCellPosition(Vector3 worldPosition)
     {
         int x = Mathf.FloorToInt(worldPosition.x / tileSize);
