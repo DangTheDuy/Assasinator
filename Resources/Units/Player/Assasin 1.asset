@@ -15,8 +15,8 @@ MonoBehaviour:
   unitName: assin
   Image: {fileID: 21300000, guid: ad6933a68da3c6d4aa1374fbed2840a6, type: 3}
   moveRange: 1
-  maxHealth: 0
-  attackPower: 0
+  maxHealth: 3
+  attackPower: 1
   defensePower: 0
   maxAP: 3
   skills:

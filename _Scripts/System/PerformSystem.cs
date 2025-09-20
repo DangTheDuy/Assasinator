@@ -8,7 +8,8 @@ public class PerformSystem : MonoBehaviour
     {
         ActionSystem.AttachPerformer<AssassinateGA>(AssassinatePerformer);
         ActionSystem.AttachPerformer<ShurikenGA>(ShurikenPerformer);
-        ActionSystem.AttachPerformer<AttackHeroGA>(PerformAttackHero);
+        ActionSystem.AttachPerformer<AttackHeroGA>(AttackHeroPerformer);
+        ActionSystem.AttachPerformer<FightGA>(FightPerformer);
     }
 
     private void OnDisable()
@@ -16,6 +17,7 @@ public class PerformSystem : MonoBehaviour
         ActionSystem.DetachPerformer<AssassinateGA>();
         ActionSystem.DetachPerformer<ShurikenGA>();
         ActionSystem.DetachPerformer<AttackHeroGA>();
+        ActionSystem.DetachPerformer<FightGA>();
     }
 
     private IEnumerator AssassinatePerformer(AssassinateGA assassinateGA)
@@ -26,6 +28,30 @@ public class PerformSystem : MonoBehaviour
             UIManager.Instance.ShowSkillBar(Unit.SelectedHero);
         }
     }
+
+    private IEnumerator FightPerformer(FightGA fightGA)
+    {
+        if (fightGA.Caster == null || fightGA.Target == null) yield break;
+        if (fightGA.Caster.IsDead || fightGA.Target.IsDead) yield break;
+
+        //  Tính sát thương trước
+        int damageToTarget = fightGA.Caster.AttackPower;
+        int damageToCaster = fightGA.Target.AttackPower;
+
+        Debug.Log($"{fightGA.Caster.name} và {fightGA.Target.name} tấn công lẫn nhau!");
+
+        yield return new WaitForSeconds(0.2f); 
+
+        //  Áp dụng sát thương cùng lúc
+        fightGA.Target.TakeDamage(damageToTarget);
+        fightGA.Caster.TakeDamage(damageToCaster);
+
+        Debug.Log($"{fightGA.Caster.name} gây {damageToTarget} sát thương cho {fightGA.Target.name}");
+        Debug.Log($"{fightGA.Target.name} gây {damageToCaster} sát thương cho {fightGA.Caster.name}");
+
+        yield return new WaitForSeconds(0.3f); 
+    }
+
 
     private IEnumerator ShurikenPerformer(ShurikenGA shurikenGA)
     {
@@ -45,7 +71,7 @@ public class PerformSystem : MonoBehaviour
         Destroy(target.gameObject);
     }
 
-    private IEnumerator PerformAttackHero(AttackHeroGA action)
+    private IEnumerator AttackHeroPerformer(AttackHeroGA action)
     {
         if (action.attacker == null || action.target == null || action.target.IsDead) yield break;
 

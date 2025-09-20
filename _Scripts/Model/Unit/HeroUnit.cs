@@ -14,7 +14,8 @@ public class HeroUnit : Unit
 
     public bool IsDetected { get; set; }
     private GameObject arrowInstance;
-    private int currentAP;
+    public int currentAP;
+    public int CurrentHP => GetCurrentHealth();
 
     // ============================================== SETUP ==============================================
     public override void Setup(UnitData data)
@@ -30,6 +31,13 @@ public class HeroUnit : Unit
         currentAP = data.maxAP;
         InitAPBar();
         UpdateAP(currentAP);
+
+        HeroHUDManager hudManager = FindObjectOfType<HeroHUDManager>();
+    if (hudManager != null)
+    {
+        hudManager.CreateHUD(this); // truyền chính Hero vừa spawn
+    }
+
     }
 
     //  ========================================== SELECT =================================================
@@ -84,6 +92,15 @@ public class HeroUnit : Unit
         base.MoveTo(worldPos, gridPos);
         SpendAP(1);
     }
+    // =================================================== TAKE DAMAGE =======================================
+    public override void TakeDamage(int amount)
+    {
+        base.TakeDamage(amount);
+
+        HeroHUDManager hudManager = FindObjectOfType<HeroHUDManager>();
+        if (hudManager != null)
+            hudManager.UpdateHeroHP(this, CurrentHP, data.maxHealth);
+    }
 
     // ================================================ AP SYSTEM ========================================
     private void InitAPBar()
@@ -126,13 +143,19 @@ public class HeroUnit : Unit
     {
         currentAP = Mathf.Max(0, currentAP - amount);
         UpdateAP(currentAP);
-        UIManager.Instance.ShowSkillBar(this);
+
+        HeroHUDManager hudManager = FindObjectOfType<HeroHUDManager>();
+        if (hudManager != null)
+            hudManager.UpdateHeroAP(this, currentAP, data.maxAP);
     }
 
     public void RefillAP()
     {
         currentAP = data.maxAP;
         UpdateAP(currentAP);
+        HeroHUDManager hudManager = FindObjectOfType<HeroHUDManager>();
+        if (hudManager != null)
+            hudManager.UpdateHeroAP(this, currentAP, data.maxAP);
     }
 
     //=============================================== ARROW =============================================

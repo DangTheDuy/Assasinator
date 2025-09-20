@@ -12,7 +12,7 @@ public class Unit : MonoBehaviour
 
     public Vector2Int currentPosition { get; set; }
     public Sprite Image => data.Image;
-    private int currentHealth;
+    protected int currentHealth;
     private int currentAttack;
     private int currentDefend;
     public int AttackPower => currentAttack;
@@ -160,7 +160,7 @@ public class Unit : MonoBehaviour
         }
     }
 
-   public virtual void TakeDamage(int amount)
+    public virtual void TakeDamage(int amount)
     {
         int effectiveDamage = Mathf.Max(0, amount - defensePower);
         currentHealth -= effectiveDamage;
@@ -175,7 +175,7 @@ public class Unit : MonoBehaviour
         }
     }
 
-    
+
     protected virtual void Die()
     {
         Debug.Log($"{name} đã chết.");
@@ -184,5 +184,8 @@ public class Unit : MonoBehaviour
 
         Destroy(gameObject); // Xóa khỏi scene
     }
+    
+    public int GetCurrentHealth() => currentHealth;
+    public void SetCurrentHealth(int value) => currentHealth = value;
 
 }
