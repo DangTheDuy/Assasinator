@@ -74,6 +74,23 @@ public class EnemyUnit : Unit
     {
         OnDeselect();
     }
+
+    public void OnEnterTile(Tile tile)
+    {
+        if (tile == null) return;
+
+        bool hasHero = tile.occupyingUnits.Exists(u => u is HeroUnit);
+        if (!hasHero) return;
+
+        foreach (var unit in tile.occupyingUnits)
+        {
+            if (unit is HeroUnit hero && hero.IsDetected && !hero.IsDead)
+            {
+                ActionSystem.Instance.AddReaction(new AttackHeroGA(this, hero));
+            }
+        }
+    }
+
 // ========================================= SET HIGHLIGHT =============================================
     public void SetHighlight(bool active)
     {

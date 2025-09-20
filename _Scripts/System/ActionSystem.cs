@@ -17,7 +17,7 @@ public class ActionSystem : Singleton<ActionSystem>
     
     public void Perform(GameAction action, Action OnPerformFinished = null)
     {
-        Debug.Log($"Perform được gọi với action {action.GetType().Name}");
+       // Debug.Log($"Perform được gọi với action {action.GetType().Name}");
         if (IsPerforming)
         {
             return;

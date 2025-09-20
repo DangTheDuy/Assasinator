@@ -8,12 +8,14 @@ public class PerformSystem : MonoBehaviour
     {
         ActionSystem.AttachPerformer<AssassinateGA>(AssassinatePerformer);
         ActionSystem.AttachPerformer<ShurikenGA>(ShurikenPerformer);
+        ActionSystem.AttachPerformer<AttackHeroGA>(PerformAttackHero);
     }
 
     private void OnDisable()
     {
         ActionSystem.DetachPerformer<AssassinateGA>();
         ActionSystem.DetachPerformer<ShurikenGA>();
+        ActionSystem.DetachPerformer<AttackHeroGA>();
     }
 
     private IEnumerator AssassinatePerformer(AssassinateGA assassinateGA)
@@ -41,5 +43,15 @@ public class PerformSystem : MonoBehaviour
         yield return new WaitForSeconds(0.2f);
 
         Destroy(target.gameObject);
+    }
+
+    private IEnumerator PerformAttackHero(AttackHeroGA action)
+    {
+        if (action.attacker == null || action.target == null || action.target.IsDead) yield break;
+
+        int damage = action.attacker.AttackPower;
+        action.target.TakeDamage(damage);
+
+        yield return new WaitForSeconds(0.2f);
     }
 }

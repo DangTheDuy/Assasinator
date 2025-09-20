@@ -7,7 +7,7 @@ public class CameraController : MonoBehaviour
 
     [Header("Zoom Settings")]
     public float zoomSpeed = 5f;
-    public float minZoom = 2f;
+    public float minZoom = 6f;
     public float maxZoom = 20f;
 
     [Header("Padding Around Map")]
@@ -68,7 +68,7 @@ public class CameraController : MonoBehaviour
         float tileSize = GridManager.Instance.TileSize;
 
         float mapWidth = (max.x - min.x + 1) * tileSize + paddingLeft;
-        float mapHeight = (max.y - min.y + 1) * tileSize + + paddingBottom;
+        float mapHeight = (max.y - min.y + 1) * tileSize + +paddingBottom;
 
         float zoomByWidth = mapWidth / (2f * cam.aspect);
         float zoomByHeight = mapHeight / 2f;
@@ -88,13 +88,26 @@ public class CameraController : MonoBehaviour
         float camHalfHeight = cam.orthographicSize;
 
         float minX = (min.x * tileSize) - paddingLeft + camHalfWidth;
-    float maxX = ((max.x + 1) * tileSize) + paddingRight - camHalfWidth;
-    float minY = (min.y * tileSize) - paddingBottom + camHalfHeight;
-    float maxY = ((max.y + 1) * tileSize) + paddingTop - camHalfHeight;
+        float maxX = ((max.x + 1) * tileSize) + paddingRight - camHalfWidth;
+        float minY = (min.y * tileSize) - paddingBottom + camHalfHeight;
+        float maxY = ((max.y + 1) * tileSize) + paddingTop - camHalfHeight;
 
         Vector3 clamped = cam.transform.position;
         clamped.x = Mathf.Clamp(clamped.x, minX, maxX);
         clamped.y = Mathf.Clamp(clamped.y, minY, maxY);
         cam.transform.position = clamped;
     }
+    
+    void CenterCameraOnMap()
+    {
+        if (GridManager.Instance == null || GridManager.Instance.tiles.Count == 0) return;
+
+        Vector2Int min = GridManager.Instance.MapMin;
+        Vector2Int max = GridManager.Instance.MapMax;
+        Vector2 centerGrid = ((Vector2)min + (Vector2)max) / 2f;
+        Vector3 centerWorld = GridManager.Instance.GetWorldPosition(Vector2Int.RoundToInt(centerGrid));
+
+        cam.transform.position = new Vector3(centerWorld.x, centerWorld.y, cam.transform.position.z);
+    }
+
 }

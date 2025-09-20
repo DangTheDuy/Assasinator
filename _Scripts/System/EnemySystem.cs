@@ -50,6 +50,7 @@ public class EnemySystem : Singleton<EnemySystem>
             {
                 Vector3 worldPos = GridManager.Instance.GetWorldPosition(target);
                 enemy.MoveTo(worldPos, target);
+                enemy.OnEnterTile(targetTile);
                 firstWave.Add(enemy);
             }
             else
@@ -71,6 +72,7 @@ public class EnemySystem : Singleton<EnemySystem>
             {
                 Vector3 worldPos = GridManager.Instance.GetWorldPosition(target);
                 enemy.MoveTo(worldPos, target);
+                enemy.OnEnterTile(targetTile);
             }
         }
 

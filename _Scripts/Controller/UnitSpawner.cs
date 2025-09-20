@@ -38,9 +38,6 @@ public class UnitSpawner : MonoBehaviour
             }
         }
 
-        Vector3 heroWorldPos = GridManager.Instance.GetWorldPosition(heroSpawnCell);
-        Camera.main.transform.position = new Vector3(heroWorldPos.x, heroWorldPos.y, -10f);
-
         // SPAWN ENEMY
         int enemyUnitsToSpawn = GridManager.Instance.enemyUnitsToSpawn;
         int maxSpawnTiles = GridManager.Instance.maxEnemySpawnTiles;
@@ -85,8 +82,16 @@ public class UnitSpawner : MonoBehaviour
                 }
                 enemyIndex++;
             }
+            FocusCameraOnHero(heroSpawnCell);
         }
 
         Debug.Log($"✅ Total enemies spawned: {totalEnemiesSpawned} / {enemyUnitsToSpawn}");
     }
+
+    public void FocusCameraOnHero(Vector2Int heroCell)
+    {
+        Vector3 heroWorldPos = GridManager.Instance.GetWorldPosition(heroCell);
+        Camera.main.transform.position = new Vector3(heroWorldPos.x, heroWorldPos.y, -10f);
+    }
+
 }

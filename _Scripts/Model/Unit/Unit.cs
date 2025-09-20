@@ -12,9 +12,12 @@ public class Unit : MonoBehaviour
 
     public Vector2Int currentPosition { get; set; }
     public Sprite Image => data.Image;
-    private int currentHealth ;
-    private int currentAttack ;
-    private int currentDefend ;
+    private int currentHealth;
+    private int currentAttack;
+    private int currentDefend;
+    public int AttackPower => currentAttack;
+    public int defensePower => currentDefend;
+    public bool IsDead { get; private set; } = false;
     public static HeroUnit SelectedHero;
     public static EnemyUnit SelectedEnemy;
     public Image icon;
@@ -27,6 +30,7 @@ public class Unit : MonoBehaviour
         currentHealth = data.maxHealth;
         currentAttack = data.attackPower;
         currentDefend = data.defensePower;
+        IsDead = false;
 
         if (icon != null && data.Image != null)
         {
@@ -45,7 +49,7 @@ public class Unit : MonoBehaviour
         {
             oldTile.SetUnoccupied(this);
         }
-        
+
         currentPosition = pos;
     }
 
@@ -54,9 +58,9 @@ public class Unit : MonoBehaviour
 
         if (this is EnemyUnit enemy)
         {
-            SelectedEnemy = enemy; 
+            SelectedEnemy = enemy;
             Debug.Log($"Đã chọn target {enemy.name}");
-            return; 
+            return;
         }
 
         if (SelectedHero == this)
@@ -116,7 +120,7 @@ public class Unit : MonoBehaviour
     }
 
 
-     public static HeroUnit GetSelectedUnit() => SelectedHero;
+    public static HeroUnit GetSelectedUnit() => SelectedHero;
 
     public virtual void MoveTo(Vector3 worldPos, Vector2Int gridPos)
     {
@@ -155,4 +159,30 @@ public class Unit : MonoBehaviour
             }
         }
     }
+
+   public virtual void TakeDamage(int amount)
+    {
+        int effectiveDamage = Mathf.Max(0, amount - defensePower);
+        currentHealth -= effectiveDamage;
+        currentHealth = Mathf.Max(0, currentHealth);
+
+        Debug.Log($"{name} nhận {effectiveDamage} sát thương. HP còn lại: {currentHealth}");
+
+        if (currentHealth <= 0 && !IsDead)
+        {
+            IsDead = true;
+            Die();
+        }
+    }
+
+    
+    protected virtual void Die()
+    {
+        Debug.Log($"{name} đã chết.");
+
+        // Optional: animation chết, hiệu ứng, âm thanh...
+
+        Destroy(gameObject); // Xóa khỏi scene
+    }
+
 }

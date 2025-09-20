@@ -1138,7 +1138,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   dragSpeed: 2
   zoomSpeed: 5
-  minZoom: 2
+  minZoom: 6
   maxZoom: 20
   paddingLeft: 20
   paddingBottom: 20
