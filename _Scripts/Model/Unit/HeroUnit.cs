@@ -7,13 +7,20 @@ public class HeroUnit : Unit
 {
     [Header("Hero Settings")]
     public List<SkillData> skills = new List<SkillData>();
+
+    [Header("Inventory")]
+    public List<ItemStack> inventory = new List<ItemStack>();
+
+    [Header("UI/Arrow Settings")]
     public GameObject arrow;
     public GameObject apPrefab;
     public GameObject emptyApPrefab;
     public Transform apContainer;
 
     public bool IsDetected { get; set; }
+     public static System.Action<HeroUnit> OnHeroSpawned;
     private GameObject arrowInstance;
+
     public int currentAP;
     public int CurrentHP => GetCurrentHealth();
 
@@ -22,25 +29,28 @@ public class HeroUnit : Unit
     {
         base.Setup(data);
 
+        // skills
         skills.Clear();
         if (data.skills != null && data.skills.Count > 0)
             skills.AddRange(data.skills);
         else
             Debug.LogWarning($"{data.unitName} chưa có skill nào trong UnitData!");
 
+        // AP
         currentAP = data.maxAP;
         InitAPBar();
         UpdateAP(currentAP);
 
+        // HUD
         HeroHUDManager hudManager = FindObjectOfType<HeroHUDManager>();
-    if (hudManager != null)
-    {
-        hudManager.CreateHUD(this); // truyền chính Hero vừa spawn
+        if (hudManager != null)
+        {
+            hudManager.CreateHUD(this);
+        }
+        OnHeroSpawned?.Invoke(this);
     }
 
-    }
-
-    //  ========================================== SELECT =================================================
+    // ========================================== SELECT / DESELECT ======================================
     public override void OnSelect()
     {
         base.OnSelect();
@@ -61,7 +71,6 @@ public class HeroUnit : Unit
         HighlightMovementTiles();
     }
 
-    //  =========================================== DESELECT ==============================================
     public override void OnDeselect()
     {
         base.OnDeselect();
@@ -80,7 +89,7 @@ public class HeroUnit : Unit
         }
     }
 
-    // ================================================ MOVE =============================================
+    // ================================================ MOVE ==============================================
     public override void MoveTo(Vector3 worldPos, Vector2Int gridPos)
     {
         if (!HasEnoughAP(1))
@@ -92,7 +101,8 @@ public class HeroUnit : Unit
         base.MoveTo(worldPos, gridPos);
         SpendAP(1);
     }
-    // =================================================== TAKE DAMAGE =======================================
+
+    // ============================================= TAKE DAMAGE =========================================
     public override void TakeDamage(int amount)
     {
         base.TakeDamage(amount);
@@ -136,7 +146,6 @@ public class HeroUnit : Unit
             UIManager.Instance.ShowSkillBar(this);
     }
 
-
     public bool HasEnoughAP(int amount) => currentAP >= amount;
 
     public void SpendAP(int amount)
@@ -153,9 +162,60 @@ public class HeroUnit : Unit
     {
         currentAP = data.maxAP;
         UpdateAP(currentAP);
+
         HeroHUDManager hudManager = FindObjectOfType<HeroHUDManager>();
         if (hudManager != null)
             hudManager.UpdateHeroAP(this, currentAP, data.maxAP);
+    }
+
+    // ================================================ INVENTORY ========================================
+    public void UseItem(ItemStack stack)
+    {
+        if (stack == null || stack.itemData == null) return;
+        if (!stack.Consume())
+        {
+            Debug.Log($"{name} đã hết {stack.itemData.itemName}!");
+            return;
+        }
+
+        ItemData item = stack.itemData;
+
+        switch (item.type)
+        {
+            case ItemType.Heal:
+                currentHealth = Mathf.Min(data.maxHealth, currentHealth + item.value);
+                break;
+            case ItemType.RestoreAP:
+                currentAP = Mathf.Min(data.maxAP, currentAP + item.value);
+                break;
+        }
+
+        Debug.Log($"{name} dùng {item.itemName}, còn lại {stack.quantity}");
+
+        if (stack.quantity <= 0)
+            inventory.Remove(stack);
+
+        // cập nhật HUD
+        HeroHUDManager hudManager = FindObjectOfType<HeroHUDManager>();
+        if (hudManager != null)
+        {
+            hudManager.UpdateHeroHP(this, CurrentHP, data.maxHealth);
+            hudManager.UpdateHeroAP(this, currentAP, data.maxAP);
+            hudManager.UpdateHeroItems(this, inventory);
+        }
+    }
+
+    public void AddItem(ItemData data, int amount = 1)
+    {
+        ItemStack existing = inventory.Find(s => s.itemData == data);
+        if (existing != null)
+            existing.Add(amount);
+        else
+            inventory.Add(new ItemStack(data, amount));
+
+        HeroHUDManager hudManager = FindObjectOfType<HeroHUDManager>();
+        if (hudManager != null)
+            hudManager.UpdateHeroItems(this, inventory);
     }
 
     //=============================================== ARROW =============================================
@@ -164,7 +224,7 @@ public class HeroUnit : Unit
         if (arrowInstance == null)
         {
             arrowInstance = Instantiate(Resources.Load<GameObject>("Prefabs/ArrowUI"));
-            ArrowFollowUnit follow = arrowInstance.GetComponentInChildren<ArrowFollowUnit>(); 
+            ArrowFollowUnit follow = arrowInstance.GetComponentInChildren<ArrowFollowUnit>();
             if (follow != null)
             {
                 follow.target = transform;

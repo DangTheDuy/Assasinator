@@ -5,8 +5,10 @@ public class HeroHUDManager : MonoBehaviour
 {
     public GameObject heroHudPrefab; 
     public Transform heroHudContainer; 
+
     private Dictionary<HeroUnit, HeroHUD> hudMap = new();
 
+    // ========================================== CREATE ==========================================
     public void CreateHUD(HeroUnit hero)
     {
         GameObject hudObj = Instantiate(heroHudPrefab, heroHudContainer);
@@ -15,7 +17,7 @@ public class HeroHUDManager : MonoBehaviour
         hudMap[hero] = hud;
     }
 
-    // Các hàm update để Hero gọi khi thay đổi chỉ số
+    // ========================================== UPDATE STATS ==========================================
     public void UpdateHeroHP(HeroUnit hero, int current, int max)
     {
         if (hudMap.ContainsKey(hero))
@@ -28,9 +30,10 @@ public class HeroHUDManager : MonoBehaviour
             hudMap[hero].UpdateAP(current, max);
     }
 
-   /* public void UpdateHeroItems(HeroUnit hero, List<Sprite> items)
+    // ========================================== UPDATE ITEMS ==========================================
+    public void UpdateHeroItems(HeroUnit hero, List<ItemStack> items)
     {
         if (hudMap.ContainsKey(hero))
             hudMap[hero].UpdateItems(items);
-    }*/
+    }
 }
