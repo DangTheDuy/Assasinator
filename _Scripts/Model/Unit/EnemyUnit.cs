@@ -75,6 +75,51 @@ public class EnemyUnit : Unit
         OnDeselect();
     }
 
+    public override void Die()
+    {
+        Tile tile = GridManager.Instance.GetTileAtPosition(currentPosition);
+        if (tile != null)
+        {
+            float dropChance = 0.6f; // 60% cơ hội rơi loot
+            if (Random.value <= dropChance)
+            {
+                GameObject lootPrefab = Resources.Load<GameObject>("Prefabs/ItemLoot");
+                if (lootPrefab != null)
+                {
+                    // 🔹 Lấy vị trí world chính xác theo slot (giống như khi đặt enemy)
+                    Vector3 basePos = GridManager.Instance.GetWorldPosition(currentPosition);
+                    Vector3 offset = tile.GetLocalOffsetForUnit(this);
+                    Vector3 spawnPos = new Vector3(basePos.x + offset.x, basePos.y + offset.y, -0.5f);
+
+                    GameObject lootObj = Instantiate(lootPrefab, spawnPos, Quaternion.identity, tile.transform);
+
+                    // Sửa sorting order để hiển thị trên tile
+                    SpriteRenderer sr = lootObj.GetComponent<SpriteRenderer>();
+                    SpriteRenderer tileSr = tile.GetComponent<SpriteRenderer>();
+                    if (sr != null && tileSr != null)
+                    {
+                        sr.sortingOrder = tileSr.sortingOrder + 1;
+                    }
+
+                    LootItem loot = lootObj.GetComponent<LootItem>();
+                    if (loot != null)
+                    {
+                        // Spawn cái thùng, itemData random khi nhặt
+                        loot.Init(null, 1, tile);
+                        tile.AddLoot(loot);
+                    }
+                }
+            }
+            else
+            {
+                Debug.Log("❌ Enemy không rơi loot gì.");
+            }
+        }
+
+        base.Die();
+    }
+
+
     public void OnEnterTile(Tile tile)
     {
         if (tile == null) return;

@@ -60,10 +60,10 @@ public class ActionSystem : Singleton<ActionSystem>
     }
     private IEnumerator PerformPerformer(GameAction action)
     {
-        Type type = action.GetType(); // Lấy loại cụ thể
+        Type type = action.GetType(); 
         if (performers.ContainsKey(type))
         {
-            Debug.Log($"Gọi performer cho action {type.Name}");
+        // Debug.Log($"Gọi performer cho action {type.Name}");
             yield return performers[type](action);
         }
     }

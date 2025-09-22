@@ -17,7 +17,7 @@ public class Unit : MonoBehaviour
     private int currentDefend;
     public int AttackPower => currentAttack;
     public int defensePower => currentDefend;
-    public bool IsDead { get; private set; } = false;
+    public bool IsDead { get; protected set; } = false;
     public static HeroUnit SelectedHero;
     public static EnemyUnit SelectedEnemy;
     public Image icon;
@@ -65,15 +65,13 @@ public class Unit : MonoBehaviour
 
         if (SelectedHero == this)
         {
-            // Click lại chính nó -> bỏ chọn
             OnDeselect();
         }
         else
         {
-            // Chọn unit mới
             if (SelectedHero != null)
             {
-                // (tùy bạn, có thể bỏ highlight unit cũ tại đây)
+
             }
             OnSelect();
 
@@ -176,14 +174,31 @@ public class Unit : MonoBehaviour
     }
 
 
-    protected virtual void Die()
+    public virtual void Die()
     {
-        Debug.Log($"{name} đã chết.");
+        if (IsDead) return;
+        IsDead = true;
 
-        // Optional: animation chết, hiệu ứng, âm thanh...
+        Tile tile = GridManager.Instance.GetTileAtPosition(currentPosition);
+        if (tile != null)
+            tile.SetUnoccupied(this);
 
-        Destroy(gameObject); // Xóa khỏi scene
+        if (SelectedEnemy == this) SelectedEnemy = null;
+        if (SelectedHero == this) SelectedHero = null;
+
+        SkillBarUI skillBar = FindObjectOfType<SkillBarUI>();
+        if (skillBar != null && skillBar.gameObject.activeSelf)
+        {
+            WorldSpaceUIFollow follow = skillBar.GetComponent<WorldSpaceUIFollow>();
+            if (follow != null && follow.target == this.transform)
+                skillBar.Hide();
+        }
+        if (AllUnits.Contains(this))
+            AllUnits.Remove(this);
+
+        Destroy(gameObject);
     }
+
     
     public int GetCurrentHealth() => currentHealth;
     public void SetCurrentHealth(int value) => currentHealth = value;

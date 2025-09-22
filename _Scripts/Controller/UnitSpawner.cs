@@ -84,8 +84,6 @@ public class UnitSpawner : MonoBehaviour
             }
             FocusCameraOnHero(heroSpawnCell);
         }
-
-        Debug.Log($"✅ Total enemies spawned: {totalEnemiesSpawned} / {enemyUnitsToSpawn}");
     }
 
     public void FocusCameraOnHero(Vector2Int heroCell)

@@ -15,6 +15,7 @@ public class Tile : MonoBehaviour
     public List<Unit> occupyingUnits = new List<Unit>();
     private Dictionary<Unit, int> heroSlots = new Dictionary<Unit, int>();
     private Dictionary<Unit, int> enemySlots = new Dictionary<Unit, int>();
+    public List<LootItem> lootItems = new List<LootItem>();
 
     private static readonly int[] HeroSlotPool = { 7, 8, 9, 4 };
     private static readonly int[] EnemySlotPool = { 1, 2, 3, 6 };
@@ -171,6 +172,19 @@ public class Tile : MonoBehaviour
                 }
             }
         }
+
+// ========================================== LOOT ITEM ============================================
+    public void AddLoot(LootItem loot)
+    {
+        if (!lootItems.Contains(loot))
+            lootItems.Add(loot);
+    }
+
+    public void RemoveLoot(LootItem loot)
+    {
+        lootItems.Remove(loot);
+    }
+
 // =============================================== HELPER ===========================================
     public void Highlight(bool active)
     {

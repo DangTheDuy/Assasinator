@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
 
 public class PerformSystem : MonoBehaviour
@@ -65,10 +66,8 @@ public class PerformSystem : MonoBehaviour
             yield break;
         }
 
-        Debug.Log($"[ExecuteKill] Tiêu diệt {target.name}");
         yield return new WaitForSeconds(0.2f);
-
-        Destroy(target.gameObject);
+        target.Die();
     }
 
     private IEnumerator AttackHeroPerformer(AttackHeroGA action)

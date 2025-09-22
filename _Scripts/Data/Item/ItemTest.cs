@@ -20,7 +20,6 @@ public class ItemTest : MonoBehaviour
     private void HandleHeroSpawned(HeroUnit spawnedHero)
     {
         hero = spawnedHero;
-        Debug.Log($"[ItemTest] Hero {hero.name} đã spawn xong");
     }
 
     void Update()

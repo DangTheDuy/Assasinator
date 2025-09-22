@@ -1383,7 +1383,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0.5}
   m_AnchorMax: {x: 0, y: 0.5}
-  m_AnchoredPosition: {x: 10, y: 10}
+  m_AnchoredPosition: {x: 0, y: 10}
   m_SizeDelta: {x: 120, y: 0}
   m_Pivot: {x: 0, y: 0.5}
 --- !u!114 &2012311658
@@ -1418,7 +1418,7 @@ MonoBehaviour:
     m_Top: 10
     m_Bottom: 10
   m_ChildAlignment: 0
-  m_Spacing: 10
+  m_Spacing: 200
   m_ChildForceExpandWidth: 1
   m_ChildForceExpandHeight: 0
   m_ChildControlWidth: 0
@@ -1444,6 +1444,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2071261858}
   - component: {fileID: 2071261859}
+  - component: {fileID: 2071261860}
   m_Layer: 0
   m_Name: GridManager
   m_TagString: Untagged
@@ -1485,6 +1486,20 @@ MonoBehaviour:
   obstacleTilePrefab: {fileID: 0}
   linePrefab: {fileID: 4868018810833356174, guid: 021fe6c048f883243a0a6e7b1b2916bd, type: 3}
   tileSize: 4
+--- !u!114 &2071261860
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2071261857}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ba26b32a18c473e43b8f2b761732c542, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  healPotion: {fileID: 11400000, guid: 9e895508814f9fd439c8e4a2b06053ae, type: 2}
+  apPotion: {fileID: 11400000, guid: 1f390f7af6b558d4f841369a9246f74c, type: 2}
 --- !u!1001 &6900903729196173347
 PrefabInstance:
   m_ObjectHideFlags: 0
