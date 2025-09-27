@@ -176,8 +176,15 @@ MonoBehaviour:
   m_GameObject: {fileID: 6542033830992393276}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 01f69fe0795587f45b883574bc86b44f, type: 3}
+  m_Script: {fileID: 11500000, guid: 8bc495ea699e85d44a3fe85b05efd11a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  tileData:
+    x: 0
+    y: 0
+    type: 
+    isEnemySpawnZone: 0
+    maxEnemyPerTile: 0
   gridPosition: {x: 0, y: 0}
   occupyingUnits: []
+  lootItems: []

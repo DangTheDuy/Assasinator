@@ -4,12 +4,14 @@ using UnityEngine;
 public class TargetingSystem : Singleton<TargetingSystem>
 {
     private SkillData currentSkill;
+    private ItemStack currentItemStack;
     private Unit caster;
     public bool IsTargeting => currentSkill != null;
 
-    public void EnterTargetMode(Unit casterUnit, SkillData skill)
+    public void EnterTargetMode(Unit casterUnit, SkillData skill, ItemStack stack = null)
     {
         currentSkill = skill;
+        currentItemStack = stack;
         caster = casterUnit;
 
         Vector2Int casterPos = caster.currentPosition;
@@ -55,15 +57,27 @@ public class TargetingSystem : Singleton<TargetingSystem>
             currentSkill.Execute(caster, enemy);
             if (caster is HeroUnit hero)
             {
+                if (currentItemStack != null)
+                {
+                    if (!currentItemStack.Consume())
+                    {
+                        Debug.Log($"{hero.name} đã hết {currentItemStack.itemData.itemName}!");
+                    }
+                    else
+                    {
+                        Debug.Log($"{hero.name} dùng {currentItemStack.itemData.itemName}, còn lại {currentItemStack.quantity}");
+                        if (currentItemStack.quantity <= 0)
+                            hero.inventory.Remove(currentItemStack);
+
+                        HeroHUDManager hudManager = FindObjectOfType<HeroHUDManager>();
+                        if (hudManager != null)
+                            hudManager.UpdateHeroItems(hero, hero.inventory);
+                    }
+                }
                 hero.SpendAP(currentSkill.apCost);
             }
-
             ExitTargetMode();
-            SkillBarUI.Instance?.ResetSelectedSkill(); 
-        }
-        else
-        {
-            Debug.Log($"Enemy {enemy.name} không nằm trong phạm vi kỹ năng!");
+            SkillBarUI.Instance?.ResetSelectedSkill();
         }
     }
 }

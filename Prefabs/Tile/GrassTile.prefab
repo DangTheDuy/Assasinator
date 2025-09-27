@@ -94,34 +94,19 @@ PrefabInstance:
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 4507745000056549346, guid: b9f0ece442226574a9e8cb00648d6df7, type: 3}
       insertIndex: -1
-      addedObject: {fileID: -1220491774181552447}
-    - targetCorrespondingSourceObject: {fileID: 4507745000056549346, guid: b9f0ece442226574a9e8cb00648d6df7, type: 3}
-      insertIndex: -1
       addedObject: {fileID: 965956021925058216}
     - targetCorrespondingSourceObject: {fileID: 4507745000056549346, guid: b9f0ece442226574a9e8cb00648d6df7, type: 3}
       insertIndex: -1
       addedObject: {fileID: 491963516629795749}
+    - targetCorrespondingSourceObject: {fileID: 4507745000056549346, guid: b9f0ece442226574a9e8cb00648d6df7, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1507322102215072682}
   m_SourcePrefab: {fileID: 100100000, guid: b9f0ece442226574a9e8cb00648d6df7, type: 3}
 --- !u!1 &6542033830992393276 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 4507745000056549346, guid: b9f0ece442226574a9e8cb00648d6df7, type: 3}
   m_PrefabInstance: {fileID: 7225817976527281118}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &-1220491774181552447
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6542033830992393276}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 27e8083a69eb44c40816a4da25b25bf2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  gridPosition: {x: 0, y: 0}
-  occupyingUnits: []
-  baseColor: {r: 0.49745563, g: 0.94716984, b: 0.46286222, a: 0}
 --- !u!61 &965956021925058216
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -182,3 +167,25 @@ MonoBehaviour:
   m_EffectColor: {r: 0, g: 0, b: 0, a: 0.5}
   m_EffectDistance: {x: 1, y: -1}
   m_UseGraphicAlpha: 1
+--- !u!114 &1507322102215072682
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6542033830992393276}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2e042b7e34add234f9f8e3beea345dd3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  tileData:
+    x: 0
+    y: 0
+    type: 
+    isEnemySpawnZone: 0
+    maxEnemyPerTile: 0
+  gridPosition: {x: 0, y: 0}
+  occupyingUnits: []
+  lootItems: []
+  baseColor: {r: 0, g: 0, b: 0, a: 0}

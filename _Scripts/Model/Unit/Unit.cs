@@ -168,7 +168,6 @@ public class Unit : MonoBehaviour
 
         if (currentHealth <= 0 && !IsDead)
         {
-            IsDead = true;
             Die();
         }
     }

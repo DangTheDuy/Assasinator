@@ -106,10 +106,7 @@ public class HeroUnit : Unit
     public override void TakeDamage(int amount)
     {
         base.TakeDamage(amount);
-
-        HeroHUDManager hudManager = FindObjectOfType<HeroHUDManager>();
-        if (hudManager != null)
-            hudManager.UpdateHeroHP(this, CurrentHP, data.maxHealth);
+        UpdateHUD();
     }
 
     // ================================================ AP SYSTEM ========================================
@@ -152,42 +149,39 @@ public class HeroUnit : Unit
     {
         currentAP = Mathf.Max(0, currentAP - amount);
         UpdateAP(currentAP);
-
-        HeroHUDManager hudManager = FindObjectOfType<HeroHUDManager>();
-        if (hudManager != null)
-            hudManager.UpdateHeroAP(this, currentAP, data.maxAP);
+        UpdateHUD();
     }
 
     public void RefillAP()
     {
         currentAP = data.maxAP;
         UpdateAP(currentAP);
-
-        HeroHUDManager hudManager = FindObjectOfType<HeroHUDManager>();
-        if (hudManager != null)
-            hudManager.UpdateHeroAP(this, currentAP, data.maxAP);
+        UpdateHUD();
     }
 
     // ================================================ INVENTORY ========================================
     public void UseItem(ItemStack stack)
     {
         if (stack == null || stack.itemData == null) return;
-        if (!stack.Consume())
-        {
-            Debug.Log($"{name} đã hết {stack.itemData.itemName}!");
-            return;
-        }
 
         ItemData item = stack.itemData;
 
         switch (item.type)
         {
             case ItemType.Heal:
+                if (!stack.Consume()) return;
                 currentHealth = Mathf.Min(data.maxHealth, currentHealth + item.value);
                 break;
+
             case ItemType.RestoreAP:
+                if (!stack.Consume()) return;
                 currentAP = Mathf.Min(data.maxAP, currentAP + item.value);
                 break;
+
+            case ItemType.Shuriken:
+                if (item.linkedSkill != null)
+                    TargetingSystem.Instance.EnterTargetMode(this, item.linkedSkill, stack);
+                return;
         }
 
         Debug.Log($"{name} dùng {item.itemName}, còn lại {stack.quantity}");
@@ -195,15 +189,9 @@ public class HeroUnit : Unit
         if (stack.quantity <= 0)
             inventory.Remove(stack);
 
-        // cập nhật HUD
-        HeroHUDManager hudManager = FindObjectOfType<HeroHUDManager>();
-        if (hudManager != null)
-        {
-            hudManager.UpdateHeroHP(this, CurrentHP, data.maxHealth);
-            hudManager.UpdateHeroAP(this, currentAP, data.maxAP);
-            hudManager.UpdateHeroItems(this, inventory);
-        }
+        UpdateHUD();
     }
+
 
     public void AddItem(ItemData data, int amount = 1)
     {
@@ -255,6 +243,17 @@ public class HeroUnit : Unit
     {
         foreach (var kv in GridManager.Instance.tiles)
             kv.Value.Highlight(false);
+    }
+    // ========================================== UPDATE HUD ============================================
+    private void UpdateHUD()
+    {
+        HeroHUDManager hudManager = FindObjectOfType<HeroHUDManager>();
+        if (hudManager != null)
+        {
+            hudManager.UpdateHeroHP(this, CurrentHP, data.maxHealth);
+            hudManager.UpdateHeroAP(this, currentAP, data.maxAP);
+            hudManager.UpdateHeroItems(this, inventory);
+        }
     }
 
     // ============================================= ACCESS ==============================================

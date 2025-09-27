@@ -1481,7 +1481,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   grassTilePrefab: {fileID: 6542033830992393276, guid: f7fe28f5c95a0974ca72ada8a482278e, type: 3}
   forestTilePrefab: {fileID: 0}
-  mountainTilePrefab: {fileID: 6542033830992393276, guid: 4f6903189fe1c8c42824d0fde67cc961, type: 3}
+  mountainTilePrefab: {fileID: 6542033830992393276, guid: f7fe28f5c95a0974ca72ada8a482278e, type: 3}
   houseTilePrefab: {fileID: 0}
   obstacleTilePrefab: {fileID: 0}
   linePrefab: {fileID: 4868018810833356174, guid: 021fe6c048f883243a0a6e7b1b2916bd, type: 3}
