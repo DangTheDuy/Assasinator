@@ -12,6 +12,7 @@ public class Tile : MonoBehaviour
     public virtual bool CanHide => false; 
     private bool detectionCheckedThisFrame = false;
     private GameObject overlay;
+    public GameObject radarPrefab; 
     public List<Unit> occupyingUnits = new List<Unit>();
     private Dictionary<Unit, int> heroSlots = new Dictionary<Unit, int>();
     private Dictionary<Unit, int> enemySlots = new Dictionary<Unit, int>();
@@ -160,10 +161,16 @@ public class Tile : MonoBehaviour
                 if (roll < highestDetectChance)
                 {
                     Debug.Log($"Hero bị phát hiện! (roll {roll}/{highestDetectChance})");
-                    foreach (var unit in occupyingUnits)
-                    {
-                        if (unit is HeroUnit hero)
-                            hero.IsDetected = true;
+                foreach (var unit in occupyingUnits)
+                {
+                    if (unit is HeroUnit hero)
+                        hero.IsDetected = true;
+                            
+                            if (radarPrefab != null)
+                            {
+                                Vector3 spawnPos = GridManager.Instance.GetWorldPosition(gridPosition);
+                                Instantiate(radarPrefab, spawnPos, Quaternion.identity);
+                            }
                     }
                 }
                 else
