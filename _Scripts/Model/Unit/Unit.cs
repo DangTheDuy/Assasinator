@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
+using DG.Tweening;
 
 [System.Serializable]
 public class Unit : MonoBehaviour
@@ -134,18 +135,21 @@ public class Unit : MonoBehaviour
             newTile.SetOccupied(this); // slot gán ở đây duy nhất
             Vector3 offset = newTile.GetLocalOffsetForUnit(this);
             Vector3 basePos = GridManager.Instance.GetWorldPosition(gridPos);
-            transform.position = new Vector3(basePos.x + offset.x, basePos.y + offset.y, -0.1f);
-            OnEnterTile(newTile);
+            Vector3 targetPos = new Vector3(basePos.x + offset.x, basePos.y + offset.y, -0.1f);
+
+            // 🔹 Thay vì dịch chuyển tức thì → tween mượt trong 0.3s
+            transform.DOMove(targetPos, 0.3f)
+                    .SetEase(Ease.OutQuad)
+                    .OnComplete(() => OnEnterTile(newTile));
         }
 
         currentPosition = gridPos;
+
         if (this is HeroUnit hero && SelectedHero == hero)
         {
             // Tắt highlight cũ
             foreach (var kv in GridManager.Instance.tiles)
-            {
                 kv.Value.Highlight(false);
-            }
 
             // Tính lại highlight cho các ô mới trong range
             foreach (var kv in GridManager.Instance.tiles)

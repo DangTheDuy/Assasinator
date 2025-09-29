@@ -47,7 +47,7 @@
             "y": 2,
             "type": "grass",
             "isEnemySpawnZone": true,
-            "maxEnemyPerTile": 2
+            "maxEnemyPerTile": 3
         },
         {
             "x": 3,
@@ -82,7 +82,7 @@
             "y": 2,
             "type": "grass",
             "isEnemySpawnZone": true,
-            "maxEnemyPerTile": 2
+            "maxEnemyPerTile": 3
         },
         {
             "x": 2,
@@ -96,7 +96,7 @@
             "y": 4,
             "type": "grass",
             "isEnemySpawnZone": false,
-            "maxEnemyPerTile": 0
+            "maxEnemyPerTile": 2
         },
         {
             "x": 1,
@@ -104,6 +104,76 @@
             "type": "grass",
             "isEnemySpawnZone": false,
             "maxEnemyPerTile": 0
+        },
+        {
+            "x": 3,
+            "y": 1,
+            "type": "grass",
+            "isEnemySpawnZone": false,
+            "maxEnemyPerTile": 2
+        },
+        {
+            "x": 4,
+            "y": 1,
+            "type": "grass",
+            "isEnemySpawnZone": false,
+            "maxEnemyPerTile": 2
+        },
+        {
+            "x": 4,
+            "y": 4,
+            "type": "grass",
+            "isEnemySpawnZone": false,
+            "maxEnemyPerTile": 2
+        },
+        {
+            "x": 3,
+            "y": 4,
+            "type": "grass",
+            "isEnemySpawnZone": false,
+            "maxEnemyPerTile": 2
+        },
+        {
+            "x": 0,
+            "y": 3,
+            "type": "grass",
+            "isEnemySpawnZone": false,
+            "maxEnemyPerTile": 2
+        },
+        {
+            "x": 0,
+            "y": 2,
+            "type": "grass",
+            "isEnemySpawnZone": false,
+            "maxEnemyPerTile": 2
+        },
+        {
+            "x": 1,
+            "y": 0,
+            "type": "grass",
+            "isEnemySpawnZone": false,
+            "maxEnemyPerTile": 2
+        },
+        {
+            "x": 5,
+            "y": 3,
+            "type": "grass",
+            "isEnemySpawnZone": false,
+            "maxEnemyPerTile": 2
+        },
+        {
+            "x": 5,
+            "y": 2,
+            "type": "grass",
+            "isEnemySpawnZone": false,
+            "maxEnemyPerTile": 2
+        },
+        {
+            "x": 5,
+            "y": 1,
+            "type": "grass",
+            "isEnemySpawnZone": false,
+            "maxEnemyPerTile": 2
         }
     ],
     "enemyUnitsToSpawn": 5,

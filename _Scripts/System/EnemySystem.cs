@@ -37,28 +37,22 @@ public class EnemySystem : Singleton<EnemySystem>
         List<EnemyUnit> firstWave = new List<EnemyUnit>();
         List<EnemyUnit> secondWave = new List<EnemyUnit>();
 
-        // ======= LƯỢT 1: Nếu đang cùng hero thì attack, nếu không thì move =======
+        // ======= WAVE 1: thử move =======
         foreach (var enemy in allEnemies)
         {
-            if (enemy == null || enemy.IsDead) continue;
-
+            // Nếu có hero trong tile → attack luôn, không move
             Tile currentTile = GridManager.Instance.GetTileAtPosition(enemy.currentPosition);
-            if (currentTile == null) continue;
-
-            // 🔹 Nếu trên tile hiện tại có hero -> attack, bỏ qua move
-            HeroUnit heroOnTile = currentTile.occupyingUnits.Find(u => u is HeroUnit && !u.IsDead) as HeroUnit;
-            if (heroOnTile != null)
+            if (currentTile != null)
             {
-                heroOnTile.IsDetected = true;
-                HeroAlertUI.Instance?.SetDetected(true);
-
-                ActionSystem.Instance.AddReaction(new AttackHeroGA(enemy, heroOnTile));
-                Debug.Log($"🚨 {enemy.name} attack {heroOnTile.name} (không move vì cùng tile)");
-
-                continue; // bỏ qua move
+                HeroUnit hero = currentTile.occupyingUnits.Find(u => u is HeroUnit) as HeroUnit;
+                if (hero != null && !hero.IsDead)
+                {
+                    ActionSystem.Instance.AddReaction(new AttackHeroGA(enemy, hero));
+                    yield return new WaitForSeconds(0.5f);
+                    continue;
+                }
             }
 
-            // 🔹 Nếu không có hero thì xử lý move như cũ
             Vector2Int target = enemy.currentPosition + dir;
             Tile targetTile = GridManager.Instance.GetTileAtPosition(target);
             if (targetTile == null || targetTile.IsObstacle)
@@ -74,29 +68,27 @@ public class EnemySystem : Singleton<EnemySystem>
             }
             else
             {
-                secondWave.Add(enemy); // tile đầy → thử lại sau
+                secondWave.Add(enemy);
             }
+
+            // 🔹 chờ 1 chút để tạo hiệu ứng di chuyển lần lượt
+            yield return new WaitForSeconds(0.2f);
         }
 
-        // ======= LƯỢT 2: Enemy bị từ chối thử move lại =======
+        // ======= WAVE 2: thử lại =======
         foreach (var enemy in secondWave)
         {
-            if (enemy == null || enemy.IsDead) continue;
-
+            // Kiểm tra lại tile hiện tại, nếu có hero thì attack
             Tile currentTile = GridManager.Instance.GetTileAtPosition(enemy.currentPosition);
-            if (currentTile == null) continue;
-
-            // 🔹 Lần 2 cũng check lại hero
-            HeroUnit heroOnTile = currentTile.occupyingUnits.Find(u => u is HeroUnit && !u.IsDead) as HeroUnit;
-            if (heroOnTile != null)
+            if (currentTile != null)
             {
-                heroOnTile.IsDetected = true;
-                HeroAlertUI.Instance?.SetDetected(true);
-
-                ActionSystem.Instance.AddReaction(new AttackHeroGA(enemy, heroOnTile));
-                Debug.Log($"🚨 {enemy.name} attack {heroOnTile.name} (second wave)");
-
-                continue;
+                HeroUnit hero = currentTile.occupyingUnits.Find(u => u is HeroUnit) as HeroUnit;
+                if (hero != null && !hero.IsDead)
+                {
+                    ActionSystem.Instance.AddReaction(new AttackHeroGA(enemy, hero));
+                    yield return new WaitForSeconds(0.5f);
+                    continue;
+                }
             }
 
             Vector2Int target = enemy.currentPosition + dir;
@@ -111,8 +103,8 @@ public class EnemySystem : Singleton<EnemySystem>
                 enemy.MoveTo(worldPos, target);
                 enemy.OnEnterTile(targetTile);
             }
-        }
 
-        yield break;
+            yield return new WaitForSeconds(0.2f);
+        }
     }
 }
