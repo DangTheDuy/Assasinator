@@ -37,9 +37,28 @@ public class EnemySystem : Singleton<EnemySystem>
         List<EnemyUnit> firstWave = new List<EnemyUnit>();
         List<EnemyUnit> secondWave = new List<EnemyUnit>();
 
-        // ======= LƯỢT 1: Di chuyển nếu tile đích còn chỗ =======
+        // ======= LƯỢT 1: Nếu đang cùng hero thì attack, nếu không thì move =======
         foreach (var enemy in allEnemies)
         {
+            if (enemy == null || enemy.IsDead) continue;
+
+            Tile currentTile = GridManager.Instance.GetTileAtPosition(enemy.currentPosition);
+            if (currentTile == null) continue;
+
+            // 🔹 Nếu trên tile hiện tại có hero -> attack, bỏ qua move
+            HeroUnit heroOnTile = currentTile.occupyingUnits.Find(u => u is HeroUnit && !u.IsDead) as HeroUnit;
+            if (heroOnTile != null)
+            {
+                heroOnTile.IsDetected = true;
+                HeroAlertUI.Instance?.SetDetected(true);
+
+                ActionSystem.Instance.AddReaction(new AttackHeroGA(enemy, heroOnTile));
+                Debug.Log($"🚨 {enemy.name} attack {heroOnTile.name} (không move vì cùng tile)");
+
+                continue; // bỏ qua move
+            }
+
+            // 🔹 Nếu không có hero thì xử lý move như cũ
             Vector2Int target = enemy.currentPosition + dir;
             Tile targetTile = GridManager.Instance.GetTileAtPosition(target);
             if (targetTile == null || targetTile.IsObstacle)
@@ -59,9 +78,27 @@ public class EnemySystem : Singleton<EnemySystem>
             }
         }
 
-        // ======= LƯỢT 2: Thử lại với các enemy bị từ chối =======
+        // ======= LƯỢT 2: Enemy bị từ chối thử move lại =======
         foreach (var enemy in secondWave)
         {
+            if (enemy == null || enemy.IsDead) continue;
+
+            Tile currentTile = GridManager.Instance.GetTileAtPosition(enemy.currentPosition);
+            if (currentTile == null) continue;
+
+            // 🔹 Lần 2 cũng check lại hero
+            HeroUnit heroOnTile = currentTile.occupyingUnits.Find(u => u is HeroUnit && !u.IsDead) as HeroUnit;
+            if (heroOnTile != null)
+            {
+                heroOnTile.IsDetected = true;
+                HeroAlertUI.Instance?.SetDetected(true);
+
+                ActionSystem.Instance.AddReaction(new AttackHeroGA(enemy, heroOnTile));
+                Debug.Log($"🚨 {enemy.name} attack {heroOnTile.name} (second wave)");
+
+                continue;
+            }
+
             Vector2Int target = enemy.currentPosition + dir;
             Tile targetTile = GridManager.Instance.GetTileAtPosition(target);
             if (targetTile == null || targetTile.IsObstacle)
@@ -78,6 +115,4 @@ public class EnemySystem : Singleton<EnemySystem>
 
         yield break;
     }
-
-
 }

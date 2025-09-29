@@ -36,24 +36,46 @@ public class PerformSystem : MonoBehaviour
         if (fightGA.Caster == null || fightGA.Target == null) yield break;
         if (fightGA.Caster.IsDead || fightGA.Target.IsDead) yield break;
 
-        //  Tính sát thương trước
         int damageToTarget = fightGA.Caster.AttackPower;
         int damageToCaster = fightGA.Target.AttackPower;
 
-        Debug.Log($"{fightGA.Caster.name} và {fightGA.Target.name} tấn công lẫn nhau!");
+        Vector3 casterStart = fightGA.Caster.transform.position;
+        Vector3 targetStart = fightGA.Target.transform.position;
+        Vector3 meetPoint = (casterStart + targetStart) / 2f;
 
-        yield return new WaitForSeconds(0.2f); 
+        Tween casterMove = fightGA.Caster.transform.DOMove(meetPoint, 0.25f).SetEase(Ease.OutQuad);
+        Tween targetMove = fightGA.Target.transform.DOMove(meetPoint, 0.25f).SetEase(Ease.OutQuad);
 
-        //  Áp dụng sát thương cùng lúc
+        yield return DOTween.Sequence().Join(casterMove).Join(targetMove).WaitForCompletion();
+
+        Tween casterShake = fightGA.Caster.transform.DOShakePosition(
+            duration: 0.2f,
+            strength: new Vector3(0.15f, 0.15f, 0),
+            vibrato: 20,
+            randomness: 90,
+            snapping: false,
+            fadeOut: true
+        );
+
+        Tween targetShake = fightGA.Target.transform.DOShakePosition(
+            duration: 0.2f,
+            strength: new Vector3(0.15f, 0.15f, 0),
+            vibrato: 20,
+            randomness: 90,
+            snapping: false,
+            fadeOut: true
+        );
+
+        yield return DOTween.Sequence().Join(casterShake).Join(targetShake).WaitForCompletion();
+        Tween casterBack = fightGA.Caster.transform.DOMove(casterStart, 0.25f).SetEase(Ease.InQuad);
+        Tween targetBack = fightGA.Target.transform.DOMove(targetStart, 0.25f).SetEase(Ease.InQuad);
+
+        yield return DOTween.Sequence().Join(casterBack).Join(targetBack).WaitForCompletion();
         fightGA.Target.TakeDamage(damageToTarget);
         fightGA.Caster.TakeDamage(damageToCaster);
 
-        Debug.Log($"{fightGA.Caster.name} gây {damageToTarget} sát thương cho {fightGA.Target.name}");
-        Debug.Log($"{fightGA.Target.name} gây {damageToCaster} sát thương cho {fightGA.Caster.name}");
-
-        yield return new WaitForSeconds(0.3f); 
+        yield return new WaitForSeconds(0.3f);
     }
-
 
     private IEnumerator ShurikenPerformer(ShurikenGA shurikenGA)
     {

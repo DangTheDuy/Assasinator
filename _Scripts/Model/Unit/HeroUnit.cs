@@ -92,11 +92,16 @@ public class HeroUnit : Unit
     // ================================================ MOVE ==============================================
     public override void MoveTo(Vector3 worldPos, Vector2Int gridPos)
     {
-        if (!HasEnoughAP(1))
+        if (IsDetected)
         {
-            Debug.Log("Không đủ AP để di chuyển!");
             return;
         }
+
+        if (!HasEnoughAP(1))
+            {
+                Debug.Log("Không đủ AP để di chuyển!");
+                return;
+            }
 
         base.MoveTo(worldPos, gridPos);
         SpendAP(1);
@@ -256,6 +261,7 @@ public class HeroUnit : Unit
         foreach (var kv in GridManager.Instance.tiles)
             kv.Value.Highlight(false);
     }
+
     // ========================================== UPDATE HUD ============================================
     private void UpdateHUD()
     {
