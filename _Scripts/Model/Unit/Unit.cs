@@ -135,6 +135,7 @@ public class Unit : MonoBehaviour
             Vector3 offset = newTile.GetLocalOffsetForUnit(this);
             Vector3 basePos = GridManager.Instance.GetWorldPosition(gridPos);
             transform.position = new Vector3(basePos.x + offset.x, basePos.y + offset.y, -0.1f);
+            OnEnterTile(newTile);
         }
 
         currentPosition = gridPos;
@@ -157,6 +158,7 @@ public class Unit : MonoBehaviour
             }
         }
     }
+    public virtual void OnEnterTile(Tile tile) { }
 
     public virtual void TakeDamage(int amount)
     {

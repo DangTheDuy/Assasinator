@@ -10,7 +10,6 @@ public class Tile : MonoBehaviour
     public virtual int MovementCost => 1; // mặc định 1 AP
     public virtual float DetectionModifier => 1f; // không giảm phát hiện
     public virtual bool CanHide => false; 
-    private bool detectionCheckedThisFrame = false;
     private GameObject overlay;
     public GameObject radarPrefab; 
     public List<Unit> occupyingUnits = new List<Unit>();
@@ -40,11 +39,6 @@ public class Tile : MonoBehaviour
         overlay.SetActive(false);
     }
 
-    void LateUpdate()
-    {
-        detectionCheckedThisFrame = false;
-    }
-
 // ======================================== ON MOUSE DOWN ======================================== 
     private void OnMouseDown()
     {
@@ -62,10 +56,6 @@ public class Tile : MonoBehaviour
                 Vector3 basePos = GridManager.Instance.GetWorldPosition(gridPosition);
                 selected.MoveTo(basePos, gridPosition);
             }
-            else
-            {
-                Debug.Log($"{selected.name} không thể đi xa hơn {selected.data.moveRange} ô!");
-            }
         }
     }
 
@@ -79,7 +69,7 @@ public class Tile : MonoBehaviour
 
         if (sameTypeCount >= 4)
         {
-            Debug.LogWarning($"Tile  đã đủ Không thể thêm {unit.name}");
+            Debug.LogWarning($"Tile đã đủ, không thể thêm {unit.name}");
             return;
         }
 
@@ -93,15 +83,6 @@ public class Tile : MonoBehaviour
             heroSlots[unit] = slot;
         else
             enemySlots[unit] = slot;
-
-        bool hasHero = occupyingUnits.Exists(u => u is HeroUnit);
-        bool hasEnemy = occupyingUnits.Exists(u => u is EnemyUnit);
-
-        if (hasHero && hasEnemy && !detectionCheckedThisFrame)
-        {
-            detectionCheckedThisFrame = true;
-            CheckDetection();
-        }
     }
 
     public void SetUnoccupied(Unit unit)
@@ -178,8 +159,7 @@ public class Tile : MonoBehaviour
                                 {
                                     hero.IsDetected = true;
                                     Debug.Log($"✅ {hero.name} bị phát hiện sau radar!");
-                                    if (HeroAlertUI.Instance != null)
-                                        HeroAlertUI.Instance.SetDetected(true);
+                                    HeroAlertUI.Instance?.SetDetected(true);
                                 }
                             }
                         };
@@ -188,7 +168,6 @@ public class Tile : MonoBehaviour
             }
         }
     }
-
 
 // ========================================== LOOT ITEM ============================================
     public void AddLoot(LootItem loot)

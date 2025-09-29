@@ -102,6 +102,18 @@ public class HeroUnit : Unit
         SpendAP(1);
     }
 
+    public override void OnEnterTile(Tile tile)
+    {
+        base.OnEnterTile(tile);
+        if (tile == null) return;
+
+        bool hasEnemy = tile.occupyingUnits.Exists(u => u is EnemyUnit);
+        if (hasEnemy)
+        {
+            tile.CheckDetection(); 
+        }
+    }
+
     // ============================================= TAKE DAMAGE =========================================
     public override void TakeDamage(int amount)
     {

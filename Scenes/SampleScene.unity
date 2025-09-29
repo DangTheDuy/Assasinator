@@ -1518,10 +1518,6 @@ PrefabInstance:
       propertyPath: m_Name
       value: IntentUI
       objectReference: {fileID: 0}
-    - target: {fileID: 4763819468504263493, guid: 8fc57a9f14c8fc2479373a2d684537e0, type: 3}
-      propertyPath: m_Sprite
-      value: 
-      objectReference: {fileID: 21300000, guid: 8f03a8a721d67c84eb485a11354614c3, type: 3}
     - target: {fileID: 9096036363423001109, guid: 8fc57a9f14c8fc2479373a2d684537e0, type: 3}
       propertyPath: m_Pivot.x
       value: 1
@@ -1548,11 +1544,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 9096036363423001109, guid: 8fc57a9f14c8fc2479373a2d684537e0, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 180
+      value: 150
       objectReference: {fileID: 0}
     - target: {fileID: 9096036363423001109, guid: 8fc57a9f14c8fc2479373a2d684537e0, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 180
+      value: 150
       objectReference: {fileID: 0}
     - target: {fileID: 9096036363423001109, guid: 8fc57a9f14c8fc2479373a2d684537e0, type: 3}
       propertyPath: m_LocalPosition.x
@@ -1690,7 +1686,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6660279879848769779, guid: 899c733a012521f4a8c3f66aa03b9fac, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: -170
+      value: -159
       objectReference: {fileID: 0}
     - target: {fileID: 6660279879848769779, guid: 899c733a012521f4a8c3f66aa03b9fac, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x

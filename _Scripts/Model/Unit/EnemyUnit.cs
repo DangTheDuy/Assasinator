@@ -10,6 +10,7 @@ public class EnemyUnit : Unit
     public int DetectionChance => data.detectionChance;
     private GameObject highlightOverlay;
     private GameObject arrowInstance;
+    private HashSet<HeroUnit> alreadyAttacked = new HashSet<HeroUnit>();
 
     // ================================= ON MOUSE DOWN ================================================
     private void OnMouseDown()
@@ -118,19 +119,23 @@ public class EnemyUnit : Unit
 
         base.Die();
     }
-
-
-    public void OnEnterTile(Tile tile)
+// ===================================== ENTER TILE ============================================
+    public override void OnEnterTile(Tile tile)
     {
+        base.OnEnterTile(tile);
         if (tile == null) return;
-
-        bool hasHero = tile.occupyingUnits.Exists(u => u is HeroUnit);
-        if (!hasHero) return;
 
         foreach (var unit in tile.occupyingUnits)
         {
             if (unit is HeroUnit hero && !hero.IsDead)
             {
+                if (alreadyAttacked.Contains(hero)) continue; // tránh đánh lặp
+                alreadyAttacked.Add(hero);
+
+                hero.IsDetected = true;
+                Debug.Log($"🚨 {hero.name} bị phát hiện bởi {name} (enemy bước vào tile)");
+                HeroAlertUI.Instance?.SetDetected(true);
+
                 ActionSystem.Instance.AddReaction(new AttackHeroGA(this, hero));
             }
         }
