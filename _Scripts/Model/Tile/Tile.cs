@@ -147,38 +147,48 @@ public class Tile : MonoBehaviour
     }
 // =========================================== CHECK DETECT ============================================
     public void CheckDetection()
+    {
+        int highestDetectChance = 0;
+        foreach (var unit in occupyingUnits)
         {
-            int highestDetectChance = 0;
-            foreach (var unit in occupyingUnits)
-            {
-                if (unit is EnemyUnit enemy)
-                    highestDetectChance = Mathf.Max(highestDetectChance, enemy.DetectionChance);
-            }
+            if (unit is EnemyUnit enemy)
+                highestDetectChance = Mathf.Max(highestDetectChance, enemy.DetectionChance);
+        }
 
-            if (highestDetectChance > 0)
+        if (highestDetectChance > 0)
+        {
+            int roll = Random.Range(0, 100);
+            if (roll < highestDetectChance)
             {
-                int roll = Random.Range(0, 100);
-                if (roll < highestDetectChance)
+                Debug.Log($"Hero bị phát hiện! (roll {roll}/{highestDetectChance})");
+
+                if (radarPrefab != null)
                 {
-                    Debug.Log($"Hero bị phát hiện! (roll {roll}/{highestDetectChance})");
-                foreach (var unit in occupyingUnits)
-                {
-                    if (unit is HeroUnit hero)
-                        hero.IsDetected = true;
-                            
-                            if (radarPrefab != null)
+                    Vector3 spawnPos = GridManager.Instance.GetWorldPosition(gridPosition);
+                    GameObject radarObj = Instantiate(radarPrefab, spawnPos, Quaternion.identity);
+
+                    RadarEffect radar = radarObj.GetComponent<RadarEffect>();
+                    if (radar != null)
+                    {
+                        radar.onFinished = () =>
+                        {
+                            foreach (var unit in occupyingUnits)
                             {
-                                Vector3 spawnPos = GridManager.Instance.GetWorldPosition(gridPosition);
-                                Instantiate(radarPrefab, spawnPos, Quaternion.identity);
+                                if (unit is HeroUnit hero && !hero.IsDead)
+                                {
+                                    hero.IsDetected = true;
+                                    Debug.Log($"✅ {hero.name} bị phát hiện sau radar!");
+                                    if (HeroAlertUI.Instance != null)
+                                        HeroAlertUI.Instance.SetDetected(true);
+                                }
                             }
+                        };
                     }
-                }
-                else
-                {
-                    Debug.Log($"Hero chưa bị phát hiện (roll {roll}/{highestDetectChance})");
                 }
             }
         }
+    }
+
 
 // ========================================== LOOT ITEM ============================================
     public void AddLoot(LootItem loot)

@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using DG.Tweening;
 using Unity.VisualScripting;
 using UnityEngine;
 
@@ -74,9 +75,26 @@ public class PerformSystem : MonoBehaviour
     {
         if (action.attacker == null || action.target == null || action.target.IsDead) yield break;
 
+        Vector3 startPos = action.attacker.transform.position;
+        Vector3 targetPos = action.target.transform.position;
+
+        yield return action.attacker.transform.DOMove(targetPos, 0.25f).SetEase(Ease.OutQuad).WaitForCompletion();
+        yield return action.target.transform.DOShakePosition(
+            duration: 0.2f, 
+            strength: new Vector3(0.15f, 0.15f, 0), 
+            vibrato: 20, 
+            randomness: 90, 
+            snapping: false, 
+            fadeOut: true
+        ).WaitForCompletion();
+
+        yield return action.attacker.transform.DOMove(startPos, 0.25f).SetEase(Ease.InQuad).WaitForCompletion();
+
         int damage = action.attacker.AttackPower;
         action.target.TakeDamage(damage);
 
+        Debug.Log($"{action.attacker.name} đánh {action.target.name}, gây {damage} sát thương!");
         yield return new WaitForSeconds(0.2f);
     }
+
 }

@@ -8,9 +8,29 @@ public class LootItem : MonoBehaviour
 
     public void Init(ItemData data, int qty, Tile tile)
     {
-        itemData = data;
-        quantity = qty;
         parentTile = tile;
+
+        // Nếu Init không truyền data thì random luôn
+        if (data == null)
+        {
+            itemData = ItemDatabase.Instance.GetRandomItem();
+            quantity = 1;
+        }
+        else
+        {
+            itemData = data;
+            quantity = qty;
+        }
+    }
+
+    private void Start()
+    {
+        // Nếu vì lý do nào đó Init không gọi, vẫn fallback
+        if (itemData == null)
+        {
+            itemData = ItemDatabase.Instance.GetRandomItem();
+            quantity = 1;
+        }
     }
 
     private void OnMouseDown()
@@ -33,19 +53,7 @@ public class LootItem : MonoBehaviour
 
     public void Collect(HeroUnit hero)
     {
-        if (hero == null) return;
-
-        if (itemData == null)
-        {
-            itemData = ItemDatabase.Instance.GetRandomItem();
-            quantity = 1;
-        }
-
-        if (itemData == null)
-        {
-            Debug.LogWarning("[LootItem] Không tìm thấy ItemData!");
-            return;
-        }
+        if (hero == null || itemData == null) return;
 
         hero.AddItem(itemData, quantity);
         Debug.Log($"{hero.name} nhặt được {quantity} x {itemData.itemName}");

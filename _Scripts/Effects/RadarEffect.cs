@@ -3,10 +3,10 @@ using UnityEngine;
 
 public class RadarEffect : MonoBehaviour
 {
-    public float duration = 1.5f;        // thời gian tồn tại
-    public float rotationSpeed = 240f; // độ/quay mỗi giây = 360/ duration
+    public float duration = 1.5f;     
+    public float rotationSpeed = 240f;  
     private Transform cone;
-    public static event Action<RadarEffect> OnRadarFinished;
+    public Action onFinished;
 
     void Start()
     {
@@ -17,14 +17,12 @@ public class RadarEffect : MonoBehaviour
     void Update()
     {
         if (cone != null)
-        {
             cone.Rotate(Vector3.forward, rotationSpeed * Time.deltaTime);
-        }
     }
-    
+
     private void Finish()
     {
-        OnRadarFinished?.Invoke(this); 
-        Destroy(gameObject);
+        onFinished?.Invoke();  
+        Destroy(gameObject);  
     }
 }

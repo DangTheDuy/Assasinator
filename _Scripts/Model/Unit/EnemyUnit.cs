@@ -11,7 +11,7 @@ public class EnemyUnit : Unit
     private GameObject highlightOverlay;
     private GameObject arrowInstance;
 
-// ================================= ON MOUSE DOWN ================================================
+    // ================================= ON MOUSE DOWN ================================================
     private void OnMouseDown()
     {
         if (TargetingSystem.Instance != null && TargetingSystem.Instance.IsTargeting)
@@ -48,7 +48,7 @@ public class EnemyUnit : Unit
         }
     }
 
-// =========================================== ON DESELECT =============================================
+    // =========================================== ON DESELECT =============================================
     public override void OnDeselect()
     {
         if (SelectedEnemy == this)
@@ -69,7 +69,7 @@ public class EnemyUnit : Unit
         }
     }
 
-// ========================================= ON DESTROY =================================================
+    // ========================================= ON DESTROY =================================================
     private void OnDestroy()
     {
         OnDeselect();
@@ -129,14 +129,14 @@ public class EnemyUnit : Unit
 
         foreach (var unit in tile.occupyingUnits)
         {
-            if (unit is HeroUnit hero && hero.IsDetected && !hero.IsDead)
+            if (unit is HeroUnit hero && !hero.IsDead)
             {
                 ActionSystem.Instance.AddReaction(new AttackHeroGA(this, hero));
             }
         }
     }
 
-// ========================================= SET HIGHLIGHT =============================================
+    // ========================================= SET HIGHLIGHT =============================================
     public void SetHighlight(bool active)
     {
         if (this == null || gameObject == null)
@@ -174,8 +174,8 @@ public class EnemyUnit : Unit
                 arrowInstance.SetActive(false);
         }
     }
-  
-// ============================================== GET SKILL ==========================================
+
+    // ============================================== GET SKILL ==========================================
     private List<SkillData> GetInteractionSkills()
     {
         return new List<SkillData>
@@ -184,5 +184,6 @@ public class EnemyUnit : Unit
             Resources.Load<SkillData>("Skills/FightSkill")
         };
     }
+
 }
 
