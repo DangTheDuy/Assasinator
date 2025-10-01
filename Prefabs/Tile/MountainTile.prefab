@@ -15,7 +15,7 @@ PrefabInstance:
     - target: {fileID: 1302031596160963977, guid: b9f0ece442226574a9e8cb00648d6df7, type: 3}
       propertyPath: m_Sprite
       value: 
-      objectReference: {fileID: 21300000, guid: 98f2ff53db44c3344923f5831735a6e6, type: 3}
+      objectReference: {fileID: 21300000, guid: c6e1aefccaafc0640b7ac184acce84c3, type: 3}
     - target: {fileID: 1302031596160963977, guid: b9f0ece442226574a9e8cb00648d6df7, type: 3}
       propertyPath: m_Color.b
       value: 1
@@ -31,7 +31,7 @@ PrefabInstance:
     - target: {fileID: 1302031596160963977, guid: b9f0ece442226574a9e8cb00648d6df7, type: 3}
       propertyPath: m_Materials.Array.data[0]
       value: 
-      objectReference: {fileID: 2100000, guid: 7962664502237984cb87bfc0b88ad148, type: 2}
+      objectReference: {fileID: 10754, guid: 0000000000000000f000000000000000, type: 0}
     - target: {fileID: 4507745000056549346, guid: b9f0ece442226574a9e8cb00648d6df7, type: 3}
       propertyPath: m_Name
       value: MountainTile
@@ -100,7 +100,7 @@ PrefabInstance:
       addedObject: {fileID: 491963516629795749}
     - targetCorrespondingSourceObject: {fileID: 4507745000056549346, guid: b9f0ece442226574a9e8cb00648d6df7, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 4635551725186450037}
+      addedObject: {fileID: -8910904710572779709}
   m_SourcePrefab: {fileID: 100100000, guid: b9f0ece442226574a9e8cb00648d6df7, type: 3}
 --- !u!1 &6542033830992393276 stripped
 GameObject:
@@ -167,7 +167,7 @@ MonoBehaviour:
   m_EffectColor: {r: 0, g: 0, b: 0, a: 0.5}
   m_EffectDistance: {x: 1, y: -1}
   m_UseGraphicAlpha: 1
---- !u!114 &4635551725186450037
+--- !u!114 &-8910904710572779709
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -188,3 +188,4 @@ MonoBehaviour:
   gridPosition: {x: 0, y: 0}
   occupyingUnits: []
   lootItems: []
+  radarPrefab: {fileID: 3867685701593785807, guid: 4cd76f63cf248c84eb1c8904a20be717, type: 3}

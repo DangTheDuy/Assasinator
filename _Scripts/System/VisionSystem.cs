@@ -3,17 +3,18 @@ using UnityEngine;
 
 public class VisionSystem : Singleton<VisionSystem>
 {
-    public void UpdateDiamondVision(Vector2Int newPos, int range, Vector2Int? oldPos = null)
+    public void UpdateDiamondVision(Vector2Int newPos, int range, Vector2Int? oldPos = null, int oldRange = -1)
     {
         if (oldPos.HasValue)
         {
+            int removeRange = oldRange > 0 ? oldRange : range;
             foreach (var kv in GridManager.Instance.tiles)
             {
                 Vector2Int p = kv.Key;
                 Tile tile = kv.Value;
 
                 int manhattan = GridManager.Instance.GetDistance(oldPos.Value, p);
-                if (manhattan > range) continue;
+                if (manhattan > removeRange) continue;
 
                 tile.RemoveVision();
             }
@@ -27,10 +28,10 @@ public class VisionSystem : Singleton<VisionSystem>
             int manhattan = GridManager.Instance.GetDistance(newPos, p);
             if (manhattan > range) continue;
 
+            if (HasLineOfSight(newPos, p))
             tile.AddVision();
         }
     }
-
 
     private void ApplyVision(Vector2Int center, int range, bool add)
     {
@@ -52,13 +53,25 @@ public class VisionSystem : Singleton<VisionSystem>
         }
     }
 
-    private bool HasLineOfSight(Vector2Int a, Vector2Int b)
+    private bool HasLineOfSight(Vector2Int from, Vector2Int to)
     {
-        foreach (var pos in BresenhamLine(a, b))
+        if (from == to) return true;
+
+        foreach (var pos in BresenhamLine(from, to))
         {
-            if (pos == a || pos == b) continue;
+            if (pos == from || pos == to) continue;
             Tile t = GridManager.Instance.GetTileAtPosition(pos);
-            if (t != null && t.IsObstacle) return false;
+            if (t == null) continue;
+            if (t.IsObstacle) return false;
+        }
+
+        foreach (var kv in GridManager.Instance.tiles)
+        {
+            if (kv.Value is MountainTile mountain)
+            {
+                if (mountain.BlocksVision(from, to))
+                    return false;
+            }
         }
         return true;
     }

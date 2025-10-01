@@ -97,14 +97,22 @@ public class HeroUnit : Unit
     public override void MoveTo(Vector3 worldPos, Vector2Int gridPos)
     {
         if (IsDetected) return;
-        if (!HasEnoughAP(1)) return;
+
+        Tile targetTile = GridManager.Instance.GetTileAtPosition(gridPos);
+        if (targetTile == null) return;
+
+        int cost = targetTile.MovementCost;
+        if (!HasEnoughAP(cost)) return;
 
         Vector2Int prev = currentPosition;
-        base.MoveTo(worldPos, gridPos);
-        SpendAP(1);
+        int prevRange = visionRange;
 
-        VisionSystem.Instance.UpdateDiamondVision(currentPosition, visionRange, prev);
+        base.MoveTo(worldPos, gridPos);
+        SpendAP(cost);   // 👈 trừ AP theo tile cost
+        VisionSystem.Instance.UpdateDiamondVision(gridPos, visionRange, prev, prevRange);
     }
+
+
 
     public override void OnEnterTile(Tile tile)
     {

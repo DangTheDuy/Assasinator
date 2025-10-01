@@ -45,7 +45,6 @@ public class Tile : MonoBehaviour
         CreateDetectText();
         CreateFog();
 
-        // Bắt đầu với map tối
         IsVisible = false;
         IsSeen = false;
         visibleCount = 0;
@@ -112,11 +111,14 @@ public class Tile : MonoBehaviour
 
         AssignSlot(unit, isHero);
         UpdateDetectDisplay();
+        OnUnitEnter(unit);
     }
 
     public void SetUnoccupied(Unit unit)
     {
         if (unit == null) return;
+        OnUnitExit(unit);
+
         occupyingUnits.RemoveAll(u => u == unit || u == null);
         heroSlots.Remove(unit);
         enemySlots.Remove(unit);
@@ -165,8 +167,6 @@ public class Tile : MonoBehaviour
         Vector3 offset = GetLocalOffsetForUnit(unit);
         Vector3 basePos = GridManager.Instance.GetWorldPosition(gridPosition);
         Vector3 finalPos = new Vector3(basePos.x + offset.x, basePos.y + offset.y, -1f);
-
-        Debug.Log($"[PlaceUnit] Hero đặt tại grid {gridPosition}, worldPos = {finalPos}");
 
         unit.transform.position = finalPos;
         unit.currentPosition = gridPosition;
@@ -219,16 +219,8 @@ public class Tile : MonoBehaviour
     public void UpdateDetectDisplay()
     {
         int chance = GetHighestDetectChance();
-        if (chance > 0)
-        {
-            detectText.text = $"{chance}%";
-            detectText.gameObject.SetActive(true);
-        }
-        else
-        {
-            detectText.text = "";
-            detectText.gameObject.SetActive(false);
-        }
+        detectText.text = chance > 0 ? $"{chance}%" : "";
+        detectText.gameObject.SetActive(IsVisible && chance > 0);
     }
 
     // ================== LOOT ==================
@@ -294,8 +286,10 @@ public class Tile : MonoBehaviour
             if (unit is EnemyUnit enemy)
                 enemy.SetVisibility(IsVisible);
             else
-                unit.gameObject.SetActive(IsVisible); 
+                unit.gameObject.SetActive(IsVisible);
         }
+        // Ẩn/hiện detectText theo tầm nhìn
+        detectText.gameObject.SetActive(IsVisible && detectText.text != "");
     }
 
     // ================== HELPER ==================
@@ -310,7 +304,7 @@ public class Tile : MonoBehaviour
         if (unit is HeroUnit) return occupyingUnits.FindAll(u => u is HeroUnit).Count < 4;
         return true;
     }
-    
+
     // ================== INPUT ==================
     private void OnMouseDown()
     {
@@ -330,4 +324,6 @@ public class Tile : MonoBehaviour
             }
         }
     }
+    public virtual void OnUnitEnter(Unit unit) { }
+    public virtual void OnUnitExit(Unit unit) { }
 }

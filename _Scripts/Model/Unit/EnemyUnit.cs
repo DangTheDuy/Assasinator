@@ -122,12 +122,6 @@ public class EnemyUnit : Unit
         if (canvas != null)
             canvas.enabled = visible;
 
-        if (arrowInstance != null)
-            arrowInstance.SetActive(visible);
-
-        if (highlightOverlay != null)
-            highlightOverlay.SetActive(visible);
-
         if (col != null)
             col.enabled = visible;
     }

@@ -174,7 +174,6 @@ public class GridManager : MonoBehaviour
     public Vector3 GetWorldPosition(Vector2Int gridPosition)
     {
         Vector3 pos = new Vector3(gridPosition.x * tileSize, gridPosition.y * tileSize, 0);
-        Debug.Log($"[GridManager] WorldPos từ grid {gridPosition} = {pos}");
         return pos;
     }
 
