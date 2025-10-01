@@ -30,7 +30,7 @@ public class HeroUnit : Unit
     {
         base.Setup(data);
         Debug.Log($"[Hero Setup] Hero spawn tại grid {currentPosition}, worldPos = {transform.position}");
-        VisionSystem.Instance.ApplyDiamondVision(currentPosition, visionRange);
+        VisionSystem.Instance.UpdateDiamondVision(currentPosition, visionRange);
 
 
         // skills
@@ -103,7 +103,7 @@ public class HeroUnit : Unit
         base.MoveTo(worldPos, gridPos);
         SpendAP(1);
 
-        VisionSystem.Instance.ApplyDiamondVision(currentPosition, visionRange);
+        VisionSystem.Instance.UpdateDiamondVision(currentPosition, visionRange, prev);
     }
 
     public override void OnEnterTile(Tile tile)

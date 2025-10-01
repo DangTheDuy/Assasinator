@@ -3,20 +3,34 @@ using UnityEngine;
 
 public class VisionSystem : Singleton<VisionSystem>
 {
-     public void ApplyDiamondVision(Vector2Int center, int range)
+    public void UpdateDiamondVision(Vector2Int newPos, int range, Vector2Int? oldPos = null)
     {
+        if (oldPos.HasValue)
+        {
+            foreach (var kv in GridManager.Instance.tiles)
+            {
+                Vector2Int p = kv.Key;
+                Tile tile = kv.Value;
+
+                int manhattan = GridManager.Instance.GetDistance(oldPos.Value, p);
+                if (manhattan > range) continue;
+
+                tile.RemoveVision();
+            }
+        }
+
         foreach (var kv in GridManager.Instance.tiles)
         {
             Vector2Int p = kv.Key;
             Tile tile = kv.Value;
 
-            int manhattan = GridManager.Instance.GetDistance(center, p);
+            int manhattan = GridManager.Instance.GetDistance(newPos, p);
             if (manhattan > range) continue;
 
             tile.AddVision();
-            Debug.Log($"[Vision] Sáng ở {p} từ tâm {center} (Manhattan = {manhattan})");
         }
     }
+
 
     private void ApplyVision(Vector2Int center, int range, bool add)
     {

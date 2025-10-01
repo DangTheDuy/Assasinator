@@ -78,6 +78,7 @@ public class UnitSpawner : MonoBehaviour
                 {
                     enemy.Setup(unitData);
                     tile.PlaceUnit(enemy);
+                    tile.UpdateUnitVisibility();                      
                     totalEnemiesSpawned++;
                 }
                 enemyIndex++;

@@ -1,29 +1,29 @@
-
-using System.Collections;
 using System.Collections.Generic;
-using DG.Tweening;
 using UnityEngine;
 using UnityEngine.UI;
+using DG.Tweening;
 
 public class EnemyUnit : Unit
 {
     public int DetectionChance => data.detectionChance;
+
     private GameObject highlightOverlay;
     private GameObject arrowInstance;
+    private Canvas canvas;
+    private Collider2D col;
     private HashSet<HeroUnit> alreadyAttacked = new HashSet<HeroUnit>();
 
-// ===================================================================================================
-    private void Update()
+    // ============================ INIT ============================
+    private void Awake()
     {
-        Tile tile = GridManager.Instance.GetTileAtPosition(currentPosition);
-        if (tile != null)
-            gameObject.SetActive(tile.IsVisible);
+        canvas = GetComponentInChildren<Canvas>(true);
+        col = GetComponent<Collider2D>();
     }
 
-    // ================================= ON MOUSE DOWN ================================================
+    // ============================ INTERACTION ============================
     private void OnMouseDown()
     {
-        if (TargetingSystem.Instance != null && TargetingSystem.Instance.IsTargeting)
+        if (TargetingSystem.Instance?.IsTargeting == true)
         {
             TargetingSystem.Instance.TrySelectEnemy(this);
             return;
@@ -37,126 +37,104 @@ public class EnemyUnit : Unit
         if (SelectedEnemy == this)
         {
             OnDeselect();
-
             skillBar.Hide();
             skillBar.Setup(SelectedHero, SelectedHero.GetSkills(), null);
             skillBar.GetComponent<WorldSpaceUIFollow>().target = SelectedHero.transform;
             skillBar.Show();
-            return;
         }
-
-        if (SelectedEnemy == null)
+        else
         {
             SelectedEnemy = this;
             SetHighlight(true);
-
-            List<SkillData> interactionSkills = GetInteractionSkills();
-            skillBar.Setup(SelectedHero, interactionSkills, this);
+            skillBar.Setup(SelectedHero, GetInteractionSkills(), this);
             skillBar.GetComponent<WorldSpaceUIFollow>().target = transform;
             skillBar.Show();
         }
     }
 
-    // =========================================== ON DESELECT =============================================
     public override void OnDeselect()
     {
         if (SelectedEnemy == this)
             SelectedEnemy = null;
 
         SetHighlight(false);
-
-        if (arrowInstance != null)
-        {
-            Destroy(arrowInstance);
-            arrowInstance = null;
-        }
-
-        if (highlightOverlay != null)
-        {
-            Destroy(highlightOverlay);
-            highlightOverlay = null;
-        }
+        Destroy(arrowInstance);
+        Destroy(highlightOverlay);
     }
 
-    // ========================================= ON DESTROY =================================================
     private void OnDestroy()
     {
         OnDeselect();
     }
 
+    // ============================ COMBAT ============================
     public override void Die()
     {
         Tile tile = GridManager.Instance.GetTileAtPosition(currentPosition);
-        if (tile != null)
+        if (tile != null && Random.value <= 0.6f)
         {
-            float dropChance = 0.6f; // 60% cơ hội rơi loot
-            if (Random.value <= dropChance)
+            GameObject lootPrefab = Resources.Load<GameObject>("Prefabs/ItemLoot");
+            if (lootPrefab != null)
             {
-                GameObject lootPrefab = Resources.Load<GameObject>("Prefabs/ItemLoot");
-                if (lootPrefab != null)
-                {
-                    // 🔹 Lấy vị trí world chính xác theo slot (giống như khi đặt enemy)
-                    Vector3 basePos = GridManager.Instance.GetWorldPosition(currentPosition);
-                    Vector3 offset = tile.GetLocalOffsetForUnit(this);
-                    Vector3 spawnPos = new Vector3(basePos.x + offset.x, basePos.y + offset.y, -0.5f);
+                Vector3 basePos = GridManager.Instance.GetWorldPosition(currentPosition);
+                Vector3 offset = tile.GetLocalOffsetForUnit(this);
+                Vector3 spawnPos = basePos + offset + new Vector3(0, 0, -0.5f);
 
-                    GameObject lootObj = Instantiate(lootPrefab, spawnPos, Quaternion.identity, tile.transform);
+                GameObject lootObj = Instantiate(lootPrefab, spawnPos, Quaternion.identity, tile.transform);
+                SpriteRenderer sr = lootObj.GetComponent<SpriteRenderer>();
+                SpriteRenderer tileSr = tile.GetComponent<SpriteRenderer>();
+                if (sr != null && tileSr != null)
+                    sr.sortingOrder = tileSr.sortingOrder + 1;
 
-                    // Sửa sorting order để hiển thị trên tile
-                    SpriteRenderer sr = lootObj.GetComponent<SpriteRenderer>();
-                    SpriteRenderer tileSr = tile.GetComponent<SpriteRenderer>();
-                    if (sr != null && tileSr != null)
-                    {
-                        sr.sortingOrder = tileSr.sortingOrder + 1;
-                    }
-
-                    LootItem loot = lootObj.GetComponent<LootItem>();
-                    if (loot != null)
-                    {
-                        // Spawn cái thùng, itemData random khi nhặt
-                        loot.Init(null, 1, tile);
-                        tile.AddLoot(loot);
-                    }
-                }
-            }
-            else
-            {
-                Debug.Log("❌ Enemy không rơi loot gì.");
+                LootItem loot = lootObj.GetComponent<LootItem>();
+                loot?.Init(null, 1, tile);
+                tile.AddLoot(loot);
             }
         }
 
         base.Die();
     }
-// ===================================== ENTER TILE ============================================
+
+    // ============================ TILE ENTRY ============================
     public override void OnEnterTile(Tile tile)
     {
         base.OnEnterTile(tile);
         if (tile == null) return;
 
+        SetVisibility(tile.IsVisible); // 👈 cập nhật hiển thị theo tầm nhìn
+
         foreach (var unit in tile.occupyingUnits)
         {
-            if (unit is HeroUnit hero && !hero.IsDead)
+            if (unit is HeroUnit hero && !hero.IsDead && !alreadyAttacked.Contains(hero))
             {
-                if (alreadyAttacked.Contains(hero)) continue; // tránh đánh lặp
                 alreadyAttacked.Add(hero);
-
                 hero.IsDetected = true;
-                Debug.Log($"🚨 {hero.name} bị phát hiện bởi {name} (enemy bước vào tile)");
                 HeroAlertUI.Instance?.SetDetected(true);
-
+                Debug.Log($"🚨 {hero.name} bị phát hiện bởi {name}");
                 ActionSystem.Instance.AddReaction(new AttackHeroGA(this, hero));
             }
         }
     }
 
-    // ========================================= SET HIGHLIGHT =============================================
+    // ============================ VISIBILITY ============================
+    public void SetVisibility(bool visible)
+    {
+        if (canvas != null)
+            canvas.enabled = visible;
+
+        if (arrowInstance != null)
+            arrowInstance.SetActive(visible);
+
+        if (highlightOverlay != null)
+            highlightOverlay.SetActive(visible);
+
+        if (col != null)
+            col.enabled = visible;
+    }
+
+    // ============================ HIGHLIGHT ============================
     public void SetHighlight(bool active)
     {
-        if (this == null || gameObject == null)
-        {
-            return;
-        }
-
         if (highlightOverlay == null)
         {
             highlightOverlay = new GameObject("HighlightOverlay");
@@ -170,25 +148,20 @@ public class EnemyUnit : Unit
             overlayImage.color = new Color(1f, 0f, 0f, 0.5f);
             overlayImage.raycastTarget = false;
         }
+
         highlightOverlay.SetActive(active);
 
-        if (active)
+        if (active && arrowInstance == null)
         {
-            if (arrowInstance == null)
-            {
-                arrowInstance = Instantiate(Resources.Load<GameObject>("Prefabs/ArrowUI"));
-                arrowInstance.transform.Find("ArrowContainer").GetComponent<ArrowFollowUnit>().target = transform;
-            }
-            arrowInstance.SetActive(true);
+            arrowInstance = Instantiate(Resources.Load<GameObject>("Prefabs/ArrowUI"));
+            arrowInstance.transform.Find("ArrowContainer").GetComponent<ArrowFollowUnit>().target = transform;
         }
-        else
-        {
-            if (arrowInstance != null)
-                arrowInstance.SetActive(false);
-        }
+
+        if (arrowInstance != null)
+            arrowInstance.SetActive(active);
     }
 
-    // ============================================== GET SKILL ==========================================
+    // ============================ SKILLS ============================
     private List<SkillData> GetInteractionSkills()
     {
         return new List<SkillData>
@@ -197,6 +170,4 @@ public class EnemyUnit : Unit
             Resources.Load<SkillData>("Skills/FightSkill")
         };
     }
-
 }
-

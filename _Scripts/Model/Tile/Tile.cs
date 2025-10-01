@@ -261,8 +261,11 @@ public class Tile : MonoBehaviour
             IsVisible = newVisible;
             if (IsVisible) IsSeen = true;
         }
+
         ApplyFog();
+        UpdateUnitVisibility(); 
     }
+
 
     public void ApplyFog()
     {
@@ -270,17 +273,28 @@ public class Tile : MonoBehaviour
 
         if (IsVisible)
         {
-            fogRenderer.enabled = false; // sáng → tắt fog
+            fogRenderer.enabled = false;
         }
         else if (IsSeen)
         {
             fogRenderer.enabled = true;
-            fogRenderer.color = new Color(0f, 0f, 0f, 0.5f); // xám mờ
+            fogRenderer.color = new Color(0f, 0f, 0f, 0.5f);
         }
         else
         {
             fogRenderer.enabled = true;
-            fogRenderer.color = Color.black; // đen hoàn toàn
+            fogRenderer.color = Color.black;
+        }
+    }
+
+    public void UpdateUnitVisibility()
+    {
+        foreach (var unit in occupyingUnits)
+        {
+            if (unit is EnemyUnit enemy)
+                enemy.SetVisibility(IsVisible);
+            else
+                unit.gameObject.SetActive(IsVisible); 
         }
     }
 
