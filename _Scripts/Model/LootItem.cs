@@ -2,7 +2,8 @@ using UnityEngine;
 
 public class LootItem : MonoBehaviour
 {
-    public ItemData itemData; 
+    public ItemData itemData;
+    public ItemDatabase itemDatabase; 
     public int quantity = 1;
     private Tile parentTile;
 
@@ -13,7 +14,7 @@ public class LootItem : MonoBehaviour
         // Nếu Init không truyền data thì random luôn
         if (data == null)
         {
-            itemData = ItemDatabase.Instance.GetRandomItem();
+            itemData = itemDatabase.GetRandomItem();
             quantity = 1;
         }
         else

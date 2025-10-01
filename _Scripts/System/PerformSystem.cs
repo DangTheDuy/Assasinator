@@ -114,8 +114,6 @@ public class PerformSystem : MonoBehaviour
 
         int damage = action.attacker.AttackPower;
         action.target.TakeDamage(damage);
-
-        Debug.Log($"{action.attacker.name} đánh {action.target.name}, gây {damage} sát thương!");
         yield return new WaitForSeconds(0.2f);
     }
 

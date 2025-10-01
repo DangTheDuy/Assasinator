@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 
 public class Tile : MonoBehaviour
@@ -12,6 +13,7 @@ public class Tile : MonoBehaviour
     public virtual bool CanHide => false; 
     private GameObject overlay;
     public GameObject radarPrefab; 
+    private TextMeshPro detectText;
     public List<Unit> occupyingUnits = new List<Unit>();
     private Dictionary<Unit, int> heroSlots = new Dictionary<Unit, int>();
     private Dictionary<Unit, int> enemySlots = new Dictionary<Unit, int>();
@@ -20,7 +22,7 @@ public class Tile : MonoBehaviour
     private static readonly int[] HeroSlotPool = { 7, 8, 9, 4 };
     private static readonly int[] EnemySlotPool = { 1, 2, 3, 6 };
 
-// ======================================== INIT ============================================= 
+    // ======================================== INIT ============================================= 
     public void Init(int x, int y, TileData data)
     {
         gridPosition = new Vector2Int(x, y);
@@ -37,6 +39,16 @@ public class Tile : MonoBehaviour
         overlaySr.sortingOrder = GetComponent<SpriteRenderer>().sortingOrder + 1;
 
         overlay.SetActive(false);
+        
+        // Detect chance text
+        GameObject textObj = new GameObject("DetectChanceText");
+        textObj.transform.SetParent(transform);
+        textObj.transform.localPosition = new Vector3(0, 0, -0.2f); 
+        detectText = textObj.AddComponent<TextMeshPro>();
+        detectText.alignment = TextAlignmentOptions.Center;
+        detectText.fontSize = 5;
+        detectText.color = Color.red;
+        detectText.text = "";
     }
 
 // ======================================== ON MOUSE DOWN ======================================== 
@@ -76,6 +88,8 @@ public class Tile : MonoBehaviour
         if (!occupyingUnits.Contains(unit))
             occupyingUnits.Add(unit);
 
+        UpdateDetectDisplay();
+
         int slot = FindAvailableSlot(isHero);
         if (slot == -1) return;
 
@@ -91,6 +105,7 @@ public class Tile : MonoBehaviour
         occupyingUnits.RemoveAll(u => u == unit || u == null);
         heroSlots.Remove(unit);
         enemySlots.Remove(unit);
+        UpdateDetectDisplay();
     }
 // ======================================== LOCAL OFFSET ========================================
     public Vector3 GetLocalOffsetForUnit(Unit unit)
@@ -166,6 +181,27 @@ public class Tile : MonoBehaviour
                     }
                 }
             }
+        }
+    }
+    // ===================================== UPDATE DETECT TEXT ===================================
+    public void UpdateDetectDisplay()
+    {
+        int highestDetectChance = 0;
+        foreach (var unit in occupyingUnits)
+        {
+            if (unit is EnemyUnit enemy)
+                highestDetectChance = Mathf.Max(highestDetectChance, enemy.DetectionChance);
+        }
+
+        if (highestDetectChance > 0)
+        {
+            detectText.text = $"{highestDetectChance}%";
+            detectText.gameObject.SetActive(true);
+        }
+        else
+        {
+            detectText.text = "";
+            detectText.gameObject.SetActive(false);
         }
     }
 
