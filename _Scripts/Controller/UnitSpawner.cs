@@ -33,8 +33,8 @@ public class UnitSpawner : MonoBehaviour
             HeroUnit hero = unitObject.GetComponent<HeroUnit>();
             if (hero != null)
             {
-                hero.Setup(unitData);
                 heroTile.PlaceUnit(hero);
+                hero.Setup(unitData);
             }
         }
 

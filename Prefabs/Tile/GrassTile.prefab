@@ -188,4 +188,5 @@ MonoBehaviour:
   gridPosition: {x: 0, y: 0}
   occupyingUnits: []
   lootItems: []
+  radarPrefab: {fileID: 3867685701593785807, guid: 4cd76f63cf248c84eb1c8904a20be717, type: 3}
   baseColor: {r: 0, g: 0, b: 0, a: 0}

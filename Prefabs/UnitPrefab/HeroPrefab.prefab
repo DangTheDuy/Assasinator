@@ -478,10 +478,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   icon: {fileID: 3323371338591048851}
   skills: []
+  inventory: []
   arrow: {fileID: 971197397296342469}
   apPrefab: {fileID: 4134458165716846033, guid: a6269a65fc40a27499106dbab61db7b4, type: 3}
   emptyApPrefab: {fileID: 9051242960925831672, guid: 415ebea5e1290fd48bf9452777bb7cbd, type: 3}
   apContainer: {fileID: 3148193356298335484}
+  visionRange: 2
+  currentAP: 0
 --- !u!1 &7957154231718763259
 GameObject:
   m_ObjectHideFlags: 0

@@ -12,6 +12,14 @@ public class EnemyUnit : Unit
     private GameObject arrowInstance;
     private HashSet<HeroUnit> alreadyAttacked = new HashSet<HeroUnit>();
 
+// ===================================================================================================
+    private void Update()
+    {
+        Tile tile = GridManager.Instance.GetTileAtPosition(currentPosition);
+        if (tile != null)
+            gameObject.SetActive(tile.IsVisible);
+    }
+
     // ================================= ON MOUSE DOWN ================================================
     private void OnMouseDown()
     {

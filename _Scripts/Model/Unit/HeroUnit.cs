@@ -20,6 +20,7 @@ public class HeroUnit : Unit
     public bool IsDetected { get; set; }
      public static System.Action<HeroUnit> OnHeroSpawned;
     private GameObject arrowInstance;
+    public int visionRange = 2;
 
     public int currentAP;
     public int CurrentHP => GetCurrentHealth();
@@ -28,6 +29,9 @@ public class HeroUnit : Unit
     public override void Setup(UnitData data)
     {
         base.Setup(data);
+        Debug.Log($"[Hero Setup] Hero spawn tại grid {currentPosition}, worldPos = {transform.position}");
+        VisionSystem.Instance.ApplyDiamondVision(currentPosition, visionRange);
+
 
         // skills
         skills.Clear();
@@ -92,19 +96,14 @@ public class HeroUnit : Unit
     // ================================================ MOVE ==============================================
     public override void MoveTo(Vector3 worldPos, Vector2Int gridPos)
     {
-        if (IsDetected)
-        {
-            return;
-        }
+        if (IsDetected) return;
+        if (!HasEnoughAP(1)) return;
 
-        if (!HasEnoughAP(1))
-            {
-                Debug.Log("Không đủ AP để di chuyển!");
-                return;
-            }
-
+        Vector2Int prev = currentPosition;
         base.MoveTo(worldPos, gridPos);
         SpendAP(1);
+
+        VisionSystem.Instance.ApplyDiamondVision(currentPosition, visionRange);
     }
 
     public override void OnEnterTile(Tile tile)
