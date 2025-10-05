@@ -26,7 +26,7 @@ public class UnitSpawner : MonoBehaviour
         Vector2Int heroSpawnCell = new Vector2Int(1, 1);
         Tile heroTile = GridManager.Instance.GetTileAtPosition(heroSpawnCell);
 
-        for (int i = 0; i < Mathf.Min(playerUnitDataList.Count, 1); i++)
+        for (int i = 0; i < Mathf.Min(playerUnitDataList.Count, 2); i++)
         {
             UnitData unitData = playerUnitDataList[i];
             GameObject unitObject = Instantiate(heroBasePrefab, Vector3.zero, Quaternion.identity, heroContainer);
@@ -78,13 +78,13 @@ public class UnitSpawner : MonoBehaviour
                 {
                     enemy.Setup(unitData);
                     tile.PlaceUnit(enemy);
-                    tile.UpdateUnitVisibility();                      
+                    tile.UpdateUnitVisibility();
                     totalEnemiesSpawned++;
                 }
                 enemyIndex++;
             }
-            FocusCameraOnHero(heroSpawnCell);
         }
+        FocusCameraOnHero(heroSpawnCell);
     }
 
     public void FocusCameraOnHero(Vector2Int heroCell)

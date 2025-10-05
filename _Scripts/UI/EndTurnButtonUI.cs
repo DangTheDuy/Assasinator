@@ -8,7 +8,7 @@ public class EndTurnButtonUI : MonoBehaviour
     public void OnClick()
     {
         HeroUnit.SelectedHero?.OnDeselect();
-        EnemyTurnGA enemyTurnGA = new();
-        ActionSystem.Instance.Perform(enemyTurnGA);
+        TurnManager.Instance.EndHeroTurn();
     }
+
 }

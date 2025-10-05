@@ -62,7 +62,8 @@ public class VisionSystem : Singleton<VisionSystem>
             if (pos == from || pos == to) continue;
             Tile t = GridManager.Instance.GetTileAtPosition(pos);
             if (t == null) continue;
-            if (t.IsObstacle) return false;
+            if (t.IsObstacle && !(t is WaterTile))
+                return false;
         }
 
         foreach (var kv in GridManager.Instance.tiles)

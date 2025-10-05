@@ -18,7 +18,7 @@ public class AP_System : Singleton<AP_System>
     // Hồi AP cho tất cả Hero vào đầu lượt
     private void EnemyTurnPostReaction(EnemyTurnGA enemyTurnGA)
     {
-        RefillAllHeroes();
+        TurnManager.Instance.EndEnemyTurn();
     }
 
     public void RefillAllHeroes()

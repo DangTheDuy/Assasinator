@@ -10,7 +10,7 @@ public class GridManager : MonoBehaviour
     [SerializeField] private GameObject forestTilePrefab;
     [SerializeField] private GameObject mountainTilePrefab;
     [SerializeField] private GameObject houseTilePrefab;
-    [SerializeField] private GameObject obstacleTilePrefab;
+    [SerializeField] private GameObject waterTilePrefab;
     [SerializeField] private GameObject linePrefab;
 
     [Header("Grid Settings")]
@@ -79,7 +79,7 @@ public class GridManager : MonoBehaviour
             "forest" => forestTilePrefab,
             "mountain" => mountainTilePrefab,
             "house" => houseTilePrefab,
-            "obstacle" => obstacleTilePrefab,
+            "water" => waterTilePrefab,
             _ => grassTilePrefab
         };
     }

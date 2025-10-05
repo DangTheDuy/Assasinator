@@ -18,7 +18,7 @@ MonoBehaviour:
   maxHealth: 3
   attackPower: 1
   defensePower: 0
-  maxAP: 3
+  maxAP: 30
   skills:
   - {fileID: 11400000, guid: a94fa58360c1abf47bad07fdc57f1708, type: 2}
   detectionChance: 10

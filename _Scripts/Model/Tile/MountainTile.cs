@@ -12,8 +12,11 @@ public class MountainTile : Tile
 
         if (unit is HeroUnit hero)
         {
+            int oldRange = hero.visionRange;
+            Vector2Int oldPos = hero.currentPosition;
+
             hero.visionRange += 1;
-            VisionSystem.Instance.UpdateDiamondVision(hero.currentPosition, hero.visionRange, null);
+            VisionSystem.Instance.UpdateDiamondVision(hero.currentPosition, hero.visionRange, oldPos, oldRange);
         }
     }
 

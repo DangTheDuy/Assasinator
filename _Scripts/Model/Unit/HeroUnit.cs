@@ -1,10 +1,13 @@
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using DG.Tweening;
+using UnityEngine.UI;
 
 [System.Serializable]
 public class HeroUnit : Unit
 {
+    // ====================================== FIELDS ======================================
     [Header("Hero Settings")]
     public List<SkillData> skills = new List<SkillData>();
 
@@ -18,43 +21,45 @@ public class HeroUnit : Unit
     public Transform apContainer;
 
     public bool IsDetected { get; set; }
-     public static System.Action<HeroUnit> OnHeroSpawned;
-    private GameObject arrowInstance;
+    public static System.Action<HeroUnit> OnHeroSpawned;
     public int visionRange = 2;
 
     public int currentAP;
     public int CurrentHP => GetCurrentHealth();
 
-    // ============================================== SETUP ==============================================
+    private GameObject arrowInstance;
+
+    // ================================= WATER SYSTEM ====================================
+    [Header("Water & Drowning")]
+    public bool canWalkOnWater = false;     // buff cho phép đi trên nước
+    public bool isDrowning = false;         // đang đuối nước
+    public int drownTurnsLeft = 0;          // số lượt còn lại trước khi chết
+
+    // ==================================== SETUP ========================================
     public override void Setup(UnitData data)
     {
         base.Setup(data);
-        Debug.Log($"[Hero Setup] Hero spawn tại grid {currentPosition}, worldPos = {transform.position}");
         VisionSystem.Instance.UpdateDiamondVision(currentPosition, visionRange);
 
-
-        // skills
+        // kỹ năng
         skills.Clear();
         if (data.skills != null && data.skills.Count > 0)
             skills.AddRange(data.skills);
         else
             Debug.LogWarning($"{data.unitName} chưa có skill nào trong UnitData!");
 
-        // AP
+        // AP & HUD
         currentAP = data.maxAP;
         InitAPBar();
         UpdateAP(currentAP);
 
-        // HUD
         HeroHUDManager hudManager = FindObjectOfType<HeroHUDManager>();
-        if (hudManager != null)
-        {
-            hudManager.CreateHUD(this);
-        }
+        if (hudManager != null) hudManager.CreateHUD(this);
+
         OnHeroSpawned?.Invoke(this);
     }
 
-    // ========================================== SELECT / DESELECT ======================================
+    // ================================= SELECT / DESELECT ================================
     public override void OnSelect()
     {
         base.OnSelect();
@@ -70,7 +75,6 @@ public class HeroUnit : Unit
 
         SelectedHero = this;
         UIManager.Instance.ShowSkillBar(this);
-
         ShowArrow();
         HighlightMovementTiles();
     }
@@ -93,13 +97,20 @@ public class HeroUnit : Unit
         }
     }
 
-    // ================================================ MOVE ==============================================
+    // ===================================== MOVE =========================================
     public override void MoveTo(Vector3 worldPos, Vector2Int gridPos)
     {
-        if (IsDetected) return;
+        if (IsDetected || isDrowning) return;
 
         Tile targetTile = GridManager.Instance.GetTileAtPosition(gridPos);
         if (targetTile == null) return;
+
+        // chặn đi vào nước nếu không có buff
+        if (targetTile is WaterTile && !canWalkOnWater)
+        {
+            Debug.Log($"{data.unitName} không thể đi vào ô nước!");
+            return;
+        }
 
         int cost = targetTile.MovementCost;
         if (!HasEnoughAP(cost)) return;
@@ -108,32 +119,108 @@ public class HeroUnit : Unit
         int prevRange = visionRange;
 
         base.MoveTo(worldPos, gridPos);
-        SpendAP(cost);   // 👈 trừ AP theo tile cost
+        SpendAP(cost);
         VisionSystem.Instance.UpdateDiamondVision(gridPos, visionRange, prev, prevRange);
     }
-
-
 
     public override void OnEnterTile(Tile tile)
     {
         base.OnEnterTile(tile);
         if (tile == null) return;
 
+        // check enemy detect
         bool hasEnemy = tile.occupyingUnits.Exists(u => u is EnemyUnit);
-        if (hasEnemy)
-        {
-            tile.CheckDetection(); 
-        }
+        if (hasEnemy) tile.CheckDetection();
+
+        // check nước
+        if (tile is WaterTile && !canWalkOnWater)
+            StartDrowning();
     }
 
-    // ============================================= TAKE DAMAGE =========================================
-    public override void TakeDamage(int amount)
+    // ================================== DROWNING LOGIC ==================================
+    public void EnableWaterWalk(int turns)
     {
-        base.TakeDamage(amount);
-        UpdateHUD();
+        canWalkOnWater = true;
+        StartCoroutine(WaterWalkBuff(turns));
     }
 
-    // ================================================ AP SYSTEM ========================================
+    private IEnumerator WaterWalkBuff(int turns)
+    {
+        int startTurn = TurnManager.Instance.CurrentTurn;
+
+        // chờ đến khi trôi qua số lượt chỉ định
+        yield return new WaitUntil(() => 
+            TurnManager.Instance.CurrentTurn >= startTurn + turns );
+
+        EndWaterWalkEffect();
+    }
+
+    public void EndWaterWalkEffect()
+    {
+        canWalkOnWater = false;
+        Tile tile = GridManager.Instance.GetTileAtPosition(currentPosition);
+        if (tile is WaterTile)
+            StartDrowning();
+    }
+
+    public void StartDrowning()
+    {
+        if (isDrowning) return;
+
+        isDrowning = true;
+        drownTurnsLeft = 3;
+        currentAP = 0;
+        UpdateAP(currentAP);
+        UpdateHUD();
+
+        GetComponentInChildren<Image>().color = new Color(0.5f, 0.6f, 1f, 0.9f);
+        Debug.Log($"{data.unitName} bắt đầu chết đuối!");
+    }
+
+    public void OnTurnStart()
+    {
+        if (!isDrowning) return;
+
+        drownTurnsLeft--;
+        Debug.Log($"{data.unitName} đang chết đuối! Còn {drownTurnsLeft} lượt!");
+
+        if (drownTurnsLeft <= 0)
+            DieByDrowning();
+    }
+
+    private void DieByDrowning()
+    {
+        isDrowning = false;
+        Debug.Log($"{data.unitName} đã chết đuối!");
+        TakeDamage(9999);
+    }
+
+    public bool TryRescue(HeroUnit target)
+    {
+        if (target == null || !target.isDrowning) return false;
+
+        int dist = GridManager.Instance.GetDistance(currentPosition, target.currentPosition);
+        if (dist > 1)
+        {
+            Debug.Log($"{data.unitName} quá xa để cứu {target.data.unitName}!");
+            return false;
+        }
+
+        target.isDrowning = false;
+        target.drownTurnsLeft = 0;
+        target.GetComponent<SpriteRenderer>().color = Color.white;
+
+        // kéo lên cùng ô
+        target.currentPosition = currentPosition;
+        target.transform.position = transform.position + new Vector3(0, 0.2f, 0);
+        GridManager.Instance.GetTileAtPosition(currentPosition).SetOccupied(target);
+
+        SpendAP(2);
+        Debug.Log($"{data.unitName} đã cứu {target.data.unitName} khỏi chết đuối!");
+        return true;
+    }
+
+    // ================================== AP SYSTEM =======================================
     private void InitAPBar()
     {
         if (apPrefab == null || apContainer == null)
@@ -159,8 +246,8 @@ public class HeroUnit : Unit
 
         for (int i = 0; i < maxAP; i++)
         {
-            GameObject apIcon = i < value ? apPrefab : emptyApPrefab;
-            Instantiate(apIcon, apContainer);
+            GameObject icon = i < value ? apPrefab : emptyApPrefab;
+            Instantiate(icon, apContainer);
         }
 
         if (SelectedHero != null)
@@ -183,13 +270,12 @@ public class HeroUnit : Unit
         UpdateHUD();
     }
 
-    // ================================================ INVENTORY ========================================
+    // ================================= INVENTORY =======================================
     public void UseItem(ItemStack stack)
     {
         if (stack == null || stack.itemData == null) return;
 
         ItemData item = stack.itemData;
-
         switch (item.type)
         {
             case ItemType.Heal:
@@ -206,43 +292,38 @@ public class HeroUnit : Unit
                 if (item.linkedSkill != null)
                     TargetingSystem.Instance.EnterTargetMode(this, item.linkedSkill, stack);
                 return;
+            case ItemType.Water:
+            if (!stack.Consume()) return;
+            Debug.Log($"{name} dùng {item.itemName} → có thể đi trên nước trong 1 lượt!");
+            EnableWaterWalk(1);
+            break;
+
         }
 
+        if (stack.quantity <= 0) inventory.Remove(stack);
         Debug.Log($"{name} dùng {item.itemName}, còn lại {stack.quantity}");
-
-        if (stack.quantity <= 0)
-            inventory.Remove(stack);
-
         UpdateHUD();
     }
-
 
     public void AddItem(ItemData data, int amount = 1)
     {
         ItemStack existing = inventory.Find(s => s.itemData == data);
-        if (existing != null)
-            existing.Add(amount);
-        else
-            inventory.Add(new ItemStack(data, amount));
+        if (existing != null) existing.Add(amount);
+        else inventory.Add(new ItemStack(data, amount));
 
-        HeroHUDManager hudManager = FindObjectOfType<HeroHUDManager>();
-        if (hudManager != null)
-            hudManager.UpdateHeroItems(this, inventory);
+        HeroHUDManager hud = FindObjectOfType<HeroHUDManager>();
+        hud?.UpdateHeroItems(this, inventory);
     }
 
-    //=============================================== ARROW =============================================
+    // ================================= ARROW ===========================================
     private void ShowArrow()
     {
         if (arrowInstance == null)
         {
             arrowInstance = Instantiate(Resources.Load<GameObject>("Prefabs/ArrowUI"));
-            ArrowFollowUnit follow = arrowInstance.GetComponentInChildren<ArrowFollowUnit>();
-            if (follow != null)
-            {
-                follow.target = transform;
-            }
+            var follow = arrowInstance.GetComponentInChildren<ArrowFollowUnit>();
+            if (follow != null) follow.target = transform;
         }
-
         arrowInstance.SetActive(true);
     }
 
@@ -252,7 +333,7 @@ public class HeroUnit : Unit
             arrowInstance.SetActive(false);
     }
 
-    // =========================================== TILE HIGHLIGHT ========================================
+    // =============================== TILE HIGHLIGHT =====================================
     private void HighlightMovementTiles()
     {
         foreach (var kv in GridManager.Instance.tiles)
@@ -269,18 +350,17 @@ public class HeroUnit : Unit
             kv.Value.Highlight(false);
     }
 
-    // ========================================== UPDATE HUD ============================================
-    private void UpdateHUD()
+    // =============================== HUD UPDATE ========================================
+    public void UpdateHUD()
     {
-        HeroHUDManager hudManager = FindObjectOfType<HeroHUDManager>();
-        if (hudManager != null)
-        {
-            hudManager.UpdateHeroHP(this, CurrentHP, data.maxHealth);
-            hudManager.UpdateHeroAP(this, currentAP, data.maxAP);
-            hudManager.UpdateHeroItems(this, inventory);
-        }
+        var hud = FindObjectOfType<HeroHUDManager>();
+        if (hud == null) return;
+
+        hud.UpdateHeroHP(this, CurrentHP, data.maxHealth);
+        hud.UpdateHeroAP(this, currentAP, data.maxAP);
+        hud.UpdateHeroItems(this, inventory);
     }
 
-    // ============================================= ACCESS ==============================================
+    // =============================== ACCESS ============================================
     public List<SkillData> GetSkills() => skills;
 }

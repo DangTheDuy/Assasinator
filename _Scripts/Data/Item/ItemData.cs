@@ -2,11 +2,12 @@ using UnityEngine;
 
 public enum ItemType
 {
-    Heal,        
+    Heal,
     RestoreAP,
-    Shuriken,   
-    BuffAttack,  
-    BuffDefense  
+    Shuriken,
+    BuffAttack,
+    BuffDefense,
+    Water, 
 }
 
 [CreateAssetMenu(fileName = "NewItem", menuName = "Game/Item Data")]

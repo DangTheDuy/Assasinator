@@ -24,7 +24,7 @@
         {
             "x": 1,
             "y": 2,
-            "type": "grass",
+            "type": "water",
             "isEnemySpawnZone": false,
             "maxEnemyPerTile": 0
         },
@@ -143,9 +143,9 @@
         {
             "x": 0,
             "y": 2,
-            "type": "grass",
+            "type": "water",
             "isEnemySpawnZone": false,
-            "maxEnemyPerTile": 2
+            "maxEnemyPerTile": 0
         },
         {
             "x": 1,

@@ -4,6 +4,7 @@ public class ItemTest : MonoBehaviour
 {
     public ItemData healPotion;
     public ItemData apPotion;
+    public ItemData water;
 
     private HeroUnit hero;
 
@@ -35,6 +36,19 @@ public class ItemTest : MonoBehaviour
 
             hero.AddItem(healPotion, 1);
             Debug.Log($"[ItemTest] Đã thêm 1 {healPotion.itemName}, tổng: {hero.inventory.Count} items");
+        }
+
+        if (Input.GetKeyDown(KeyCode.C))
+        {
+            Debug.Log("[ItemTest] Nhấn C");
+            if (hero == null)
+            {
+                Debug.LogWarning("[ItemTest] Hero chưa spawn!");
+                return;
+            }
+
+            hero.AddItem(water, 1);
+            Debug.Log($"[ItemTest] Đã thêm 1 {water.itemName}, tổng: {hero.inventory.Count} items");
         }
 
         if (Input.GetKeyDown(KeyCode.A))

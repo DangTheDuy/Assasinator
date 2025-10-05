@@ -680,6 +680,7 @@ Transform:
   - {fileID: 725557256}
   - {fileID: 650821775}
   - {fileID: 1227540005}
+  - {fileID: 1342041105}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1168707273
@@ -862,6 +863,50 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   heroHudPrefab: {fileID: 8588599578175018798, guid: 229536c2d26565d4ca006cf59e87df8e, type: 3}
   heroHudContainer: {fileID: 2012311657}
+--- !u!1 &1342041104
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1342041105}
+  - component: {fileID: 1342041106}
+  m_Layer: 0
+  m_Name: TurnManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1342041105
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1342041104}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 884103455}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1342041106
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1342041104}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 281edd2a58db0e249acf3af6cd265ccc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1348734751
 GameObject:
   m_ObjectHideFlags: 0
@@ -1527,9 +1572,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   grassTilePrefab: {fileID: 6542033830992393276, guid: f7fe28f5c95a0974ca72ada8a482278e, type: 3}
   forestTilePrefab: {fileID: 0}
-  mountainTilePrefab: {fileID: 6542033830992393276, guid: f7fe28f5c95a0974ca72ada8a482278e, type: 3}
+  mountainTilePrefab: {fileID: 6542033830992393276, guid: f15beadfd97ee26479464e20c7a43f09, type: 3}
   houseTilePrefab: {fileID: 0}
-  obstacleTilePrefab: {fileID: 0}
+  waterTilePrefab: {fileID: 6542033830992393276, guid: fed6c6ff7b9f65141b7265d149e60dff, type: 3}
   linePrefab: {fileID: 4868018810833356174, guid: 021fe6c048f883243a0a6e7b1b2916bd, type: 3}
   tileSize: 4
 --- !u!114 &2071261860

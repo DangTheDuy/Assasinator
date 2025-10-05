@@ -74,6 +74,12 @@ public class PerformSystem : MonoBehaviour
         fightGA.Target.TakeDamage(damageToTarget);
         fightGA.Caster.TakeDamage(damageToCaster);
 
+        // Cập nhật UI HP
+        if (fightGA.Target is HeroUnit heroTarget)
+            heroTarget.UpdateHUD();
+        if (fightGA.Caster is HeroUnit heroCaster)
+            heroCaster.UpdateHUD();
+
         yield return new WaitForSeconds(0.3f);
     }
 
@@ -114,6 +120,8 @@ public class PerformSystem : MonoBehaviour
 
         int damage = action.attacker.AttackPower;
         action.target.TakeDamage(damage);
+        if (action.target is HeroUnit heroTarget)
+        heroTarget.UpdateHUD();
         yield return new WaitForSeconds(0.2f);
     }
 

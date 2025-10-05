@@ -6,7 +6,7 @@ using System.IO;
 public class MapEditor : EditorWindow
 {
     private Dictionary<Vector2Int, TileData> tileMap = new Dictionary<Vector2Int, TileData>();
-    private string[] tileTypes = { "grass", "forest", "mountain", "house", "obstacle" };
+    private string[] tileTypes = { "grass", "forest", "mountain", "house", "water" };
     private int selectedTileIndex = 0;
     private int maxEnemyPerTile = 0;
     private int gridSize = 10;
