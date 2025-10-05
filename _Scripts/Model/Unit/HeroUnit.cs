@@ -39,7 +39,7 @@ public class HeroUnit : Unit
     public override void Setup(UnitData data)
     {
         base.Setup(data);
-        VisionSystem.Instance.UpdateDiamondVision(currentPosition, visionRange);
+        VisionSystem.Instance.UpdateDiamondVision(currentPosition, visionRange, null, -1, this);
 
         // kỹ năng
         skills.Clear();
@@ -120,7 +120,7 @@ public class HeroUnit : Unit
 
         base.MoveTo(worldPos, gridPos);
         SpendAP(cost);
-        VisionSystem.Instance.UpdateDiamondVision(gridPos, visionRange, prev, prevRange);
+        VisionSystem.Instance.UpdateDiamondVision(gridPos, visionRange, prev, prevRange, this);
     }
 
     public override void OnEnterTile(Tile tile)
@@ -147,11 +147,8 @@ public class HeroUnit : Unit
     private IEnumerator WaterWalkBuff(int turns)
     {
         int startTurn = TurnManager.Instance.CurrentTurn;
-
-        // chờ đến khi trôi qua số lượt chỉ định
         yield return new WaitUntil(() => 
             TurnManager.Instance.CurrentTurn >= startTurn + turns );
-
         EndWaterWalkEffect();
     }
 
@@ -166,33 +163,22 @@ public class HeroUnit : Unit
     public void StartDrowning()
     {
         if (isDrowning) return;
-
         isDrowning = true;
         drownTurnsLeft = 3;
         currentAP = 0;
         UpdateAP(currentAP);
         UpdateHUD();
-
         GetComponentInChildren<Image>().color = new Color(0.5f, 0.6f, 1f, 0.9f);
-        Debug.Log($"{data.unitName} bắt đầu chết đuối!");
+        Debug.Log($"{data.unitName} bị đuối nước!");
     }
 
     public void OnTurnStart()
     {
         if (!isDrowning) return;
-
         drownTurnsLeft--;
-        Debug.Log($"{data.unitName} đang chết đuối! Còn {drownTurnsLeft} lượt!");
-
+        Debug.Log($"{data.unitName} đang đuối nước! Còn {drownTurnsLeft} lượt!");
         if (drownTurnsLeft <= 0)
-            DieByDrowning();
-    }
-
-    private void DieByDrowning()
-    {
-        isDrowning = false;
-        Debug.Log($"{data.unitName} đã chết đuối!");
-        TakeDamage(9999);
+            Die();
     }
 
     public bool TryRescue(HeroUnit target)
@@ -216,8 +202,16 @@ public class HeroUnit : Unit
         GridManager.Instance.GetTileAtPosition(currentPosition).SetOccupied(target);
 
         SpendAP(2);
-        Debug.Log($"{data.unitName} đã cứu {target.data.unitName} khỏi chết đuối!");
+        Debug.Log($"{data.unitName} đã cứu {target.data.unitName} khỏi đuối!");
         return true;
+    }
+    // =================== DIE ================================
+    public override void Die()
+    {
+        if (VisionSystem.Instance != null)
+            VisionSystem.Instance.RemoveHeroVision(this);
+
+        base.Die();
     }
 
     // ================================== AP SYSTEM =======================================

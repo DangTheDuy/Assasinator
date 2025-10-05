@@ -3,53 +3,60 @@ using UnityEngine;
 
 public class VisionSystem : Singleton<VisionSystem>
 {
-    public void UpdateDiamondVision(Vector2Int newPos, int range, Vector2Int? oldPos = null, int oldRange = -1)
+    private Dictionary<HeroUnit, HashSet<Tile>> heroVisibleTiles = new Dictionary<HeroUnit, HashSet<Tile>>();
+
+    public void UpdateDiamondVision(Vector2Int newPos, int range, Vector2Int? oldPos = null, int oldRange = -1, HeroUnit hero = null)
     {
-        if (oldPos.HasValue)
-        {
-            int removeRange = oldRange > 0 ? oldRange : range;
-            foreach (var kv in GridManager.Instance.tiles)
-            {
-                Vector2Int p = kv.Key;
-                Tile tile = kv.Value;
+        if (hero == null) return;
+        if (GridManager.Instance == null || GridManager.Instance.tiles.Count == 0) return;
 
-                int manhattan = GridManager.Instance.GetDistance(oldPos.Value, p);
-                if (manhattan > removeRange) continue;
+        // Lấy vùng nhìn cũ
+        HashSet<Tile> oldTiles;
+        if (!heroVisibleTiles.TryGetValue(hero, out oldTiles))
+            oldTiles = new HashSet<Tile>();
 
-                tile.RemoveVision();
-            }
-        }
+        // Tạo vùng nhìn mới
+        HashSet<Tile> newTiles = new HashSet<Tile>();
 
         foreach (var kv in GridManager.Instance.tiles)
         {
             Vector2Int p = kv.Key;
             Tile tile = kv.Value;
-
             int manhattan = GridManager.Instance.GetDistance(newPos, p);
             if (manhattan > range) continue;
 
             if (HasLineOfSight(newPos, p))
-            tile.AddVision();
+                newTiles.Add(tile);
         }
+
+        // Cập nhật vùng riêng của hero (so sánh cũ/mới)
+        heroVisibleTiles[hero] = newTiles;
+        RecalculateAllVision();
     }
 
-    private void ApplyVision(Vector2Int center, int range, bool add)
+    public void RemoveHeroVision(HeroUnit hero)
     {
-        foreach (var kv in GridManager.Instance.tiles)
+        if (heroVisibleTiles.Remove(hero))
+            RecalculateAllVision();
+    }
+
+    public void RecalculateAllVision()
+    {
+        // Reset toàn bộ tile bằng cách gọi RemoveVision cho tới khi count = 0
+        foreach (var tile in GridManager.Instance.tiles.Values)
         {
-            Vector2Int p = kv.Key;
-            Tile tile = kv.Value;
+            while (tile.visibleCount > 0)
+                tile.RemoveVision();
+        }
 
-            int dx = Mathf.Abs(p.x - center.x);
-            int dy = Mathf.Abs(p.y - center.y);
-            if (Mathf.Max(dx, dy) > range) continue;
+        // Cộng dồn tầm nhìn của mọi hero
+        foreach (var kv in heroVisibleTiles)
+        {
+            var hero = kv.Key;
+            if (hero == null) continue;
 
-
-            if (HasLineOfSight(center, p))
-            {
-                if (add) tile.AddVision();
-                else tile.RemoveVision();
-            }
+            foreach (var tile in kv.Value)
+                tile.AddVision();
         }
     }
 
@@ -66,6 +73,7 @@ public class VisionSystem : Singleton<VisionSystem>
                 return false;
         }
 
+        // nếu có tile đặc biệt (núi chẳng hạn) chặn tầm nhìn
         foreach (var kv in GridManager.Instance.tiles)
         {
             if (kv.Value is MountainTile mountain)

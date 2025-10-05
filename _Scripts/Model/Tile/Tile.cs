@@ -19,7 +19,7 @@ public class Tile : MonoBehaviour
     // Vision
     public bool IsVisible { get; private set; } = false;
     public bool IsSeen { get; private set; } = false;
-    private int visibleCount = 0;
+    public int visibleCount = 0;
 
     // UI
     private GameObject overlay;
