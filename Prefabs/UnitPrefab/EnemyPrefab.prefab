@@ -177,6 +177,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   icon: {fileID: 4460501544076349375}
+  visionRange: 2
+  currentState: 0
+  detectedHero: {fileID: 0}
 --- !u!1 &6282210419879104745
 GameObject:
   m_ObjectHideFlags: 0

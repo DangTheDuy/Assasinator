@@ -182,4 +182,40 @@ public class GridManager : MonoBehaviour
     {
         return Mathf.Abs(from.x - to.x) + Mathf.Abs(from.y - to.y);
     }
+
+    public static readonly Vector2Int[] Directions = new[]
+    {
+        new Vector2Int(1, 0),
+        new Vector2Int(-1, 0),
+        new Vector2Int(0, 1),
+        new Vector2Int(0, -1)
+    };
+
+    public Vector2Int GetStepTowards(Vector2Int start, Vector2Int target, int steps = 1)
+    {
+        var stepsList = PathfindingHelper.GetStepsToward(start, target, steps);
+        if (stepsList == null || stepsList.Count == 0)
+            return start;
+
+        return stepsList[stepsList.Count - 1];
+    }
+
+    public List<Vector2Int> GetCellsInDiamondRange(Vector2Int center, int range)
+    {
+        List<Vector2Int> result = new List<Vector2Int>();
+        for (int dx = -range; dx <= range; dx++)
+        {
+            for (int dy = -range; dy <= range; dy++)
+            {
+                if (Mathf.Abs(dx) + Mathf.Abs(dy) <= range)
+                {
+                    Vector2Int pos = new Vector2Int(center.x + dx, center.y + dy);
+                    if (tiles.ContainsKey(pos))
+                        result.Add(pos);
+                }
+            }
+        }
+        return result;
+    }
+
 }

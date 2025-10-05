@@ -100,7 +100,7 @@ public class HeroUnit : Unit
     // ===================================== MOVE =========================================
     public override void MoveTo(Vector3 worldPos, Vector2Int gridPos)
     {
-        if (IsDetected || isDrowning) return;
+        if ( isDrowning) return;
 
         Tile targetTile = GridManager.Instance.GetTileAtPosition(gridPos);
         if (targetTile == null) return;

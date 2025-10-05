@@ -7,46 +7,55 @@ public class HeroSystem : Singleton<HeroSystem>
 
     private void Start()
     {
-        GenerateNextIntent(); 
-    }
-    private void OnEnable()
-    {
-        ActionSystem.UnsubscriberReaction<EnemyTurnGA>(EnemyTurnPreReaction, ReactionTiming.PRE);
-        ActionSystem.UnsubscriberReaction<EnemyTurnGA>(EnemyTurnPostReaction, ReactionTiming.POST);
-
-        ActionSystem.SubscriberReaction<EnemyTurnGA>(EnemyTurnPreReaction, ReactionTiming.PRE);
-        ActionSystem.SubscriberReaction<EnemyTurnGA>(EnemyTurnPostReaction, ReactionTiming.POST);
-    }
-
-    private void OnDisable()
-    {
-        ActionSystem.UnsubscriberReaction<EnemyTurnGA>(EnemyTurnPreReaction, ReactionTiming.PRE);
-        ActionSystem.UnsubscriberReaction<EnemyTurnGA>(EnemyTurnPostReaction, ReactionTiming.POST);
+        GenerateNextIntent();
     }
 
     public List<HeroUnit> GetAllHeroes()
     {
-        return new List<HeroUnit>(FindObjectsOfType<HeroUnit>()); 
+        return new List<HeroUnit>(FindObjectsOfType<HeroUnit>());
     }
-
     public void GenerateNextIntent()
     {
         Vector2Int[] dirs = { Vector2Int.up, Vector2Int.down, Vector2Int.left, Vector2Int.right };
         currentDirection = dirs[Random.Range(0, dirs.Length)];
-
-        IntentUI.Instance.SetDirection(currentDirection);
+        IntentUI.Instance?.SetDirection(currentDirection);
     }
 
-    private void EnemyTurnPreReaction(EnemyTurnGA enemyTurnGA)
+    public void EndHeroTurn()
     {
-
+        TurnManager.Instance.EndHeroTurn();
     }
 
-    private void EnemyTurnPostReaction(EnemyTurnGA enemyTurnGA)
+    public void OnHeroTurnStart()
     {
-        EnemyMoveGA moveGA = new EnemyMoveGA { direction = currentDirection };
-        ActionSystem.Instance.AddReaction(moveGA);
+        foreach (var hero in GetAllHeroes())
+        {
+            if (hero == null || hero.IsDead) continue;
+            hero.RefillAP();
+            hero.UpdateHUD();
+        }
 
         GenerateNextIntent();
+    }
+
+    private void OnEnable()
+    {
+        TurnManager.OnTurnStart += HandleTurnStart;
+    }
+
+    private void OnDisable()
+    {
+        TurnManager.OnTurnStart -= HandleTurnStart;
+    }
+
+    private void HandleTurnStart(TurnManager.TurnPhase phase)
+    {
+        if (phase == TurnManager.TurnPhase.Hero)
+            OnHeroTurnStart();
+    }
+    
+    public Vector2Int GetCurrentIntentDirection()
+    {
+        return currentDirection;
     }
 }

@@ -12,6 +12,7 @@ public class UnitData : ScriptableObject
     public int attackPower;
     public int defensePower;
     public int maxAP;
+    public int attackRange;
     public List<SkillData> skills;
     [Range(0, 100)] public int detectionChance = 10;
 }

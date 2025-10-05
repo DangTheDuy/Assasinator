@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using UnityEngine;
 
 public class TurnManager : Singleton<TurnManager>
@@ -22,7 +23,13 @@ public class TurnManager : Singleton<TurnManager>
         CurrentPhase = TurnPhase.Enemy;
         OnTurnStart?.Invoke(TurnPhase.Enemy);
 
-        ActionSystem.Instance.Perform(new EnemyTurnGA());
+        StartCoroutine(EnemyTurnCoroutine());
+    }
+
+    private IEnumerator EnemyTurnCoroutine()
+    {
+        yield return EnemySystem.Instance.PerformEnemyTurn();
+        EndEnemyTurn(); 
     }
 
     public void EndEnemyTurn()

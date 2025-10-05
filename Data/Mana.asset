@@ -18,3 +18,5 @@ MonoBehaviour:
   type: 1
   value: 1
   consumable: 1
+  linkedSkill: {fileID: 0}
+  requireTarget: 0

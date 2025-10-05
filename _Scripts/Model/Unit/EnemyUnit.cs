@@ -3,15 +3,25 @@ using UnityEngine;
 using UnityEngine.UI;
 using DG.Tweening;
 
+public enum EnemyState
+{
+    Patrol,    
+    Alert,     
+    Chase      
+}
+
 public class EnemyUnit : Unit
 {
+    public int visionRange = 2;
     public int DetectionChance => data.detectionChance;
+    public EnemyState currentState = EnemyState.Patrol;
+    public HeroUnit detectedHero;  
 
+    private readonly HashSet<HeroUnit> alreadyAttacked = new();
     private GameObject highlightOverlay;
     private GameObject arrowInstance;
     private Canvas canvas;
     private Collider2D col;
-    private HashSet<HeroUnit> alreadyAttacked = new HashSet<HeroUnit>();
 
     // ============================ INIT ============================
     private void Awake()
@@ -20,7 +30,84 @@ public class EnemyUnit : Unit
         col = GetComponent<Collider2D>();
     }
 
-    // ============================ INTERACTION ============================
+    // ============================ STATE MACHINE ============================
+    public void SetState(EnemyState newState, HeroUnit target = null)
+    {
+        currentState = newState;
+        detectedHero = target;
+
+        switch (currentState)
+        {
+            case EnemyState.Patrol:
+                Debug.Log($"🟢 {name} quay lại tuần tra.");
+                break;
+
+            case EnemyState.Alert:
+                Debug.Log($"🔴 {name} phát hiện {detectedHero?.name}! Báo động toàn bộ enemy!");
+                EnemySystem.Instance.TriggerAlert(this);
+                break;
+
+            case EnemyState.Chase:
+                Debug.Log($"⚡ {name} bắt đầu truy đuổi {detectedHero?.name}!");
+                break;
+        }
+    }
+
+    public bool HasTarget() => detectedHero != null && !detectedHero.IsDead;
+
+    // ============================ TILE ENTRY ============================
+    public override void OnEnterTile(Tile tile)
+    {
+        base.OnEnterTile(tile);
+        if (tile == null) return;
+
+        SetVisibility(tile.IsVisible);
+
+        foreach (var unit in tile.occupyingUnits)
+        {
+            if (unit is HeroUnit hero && !hero.IsDead && !alreadyAttacked.Contains(hero))
+            {
+                OnHeroDetected(hero);
+            }
+        }
+    }
+
+    private void OnHeroDetected(HeroUnit hero)
+    {
+        alreadyAttacked.Add(hero);
+        hero.IsDetected = true;
+        HeroAlertUI.Instance?.SetDetected(true);
+
+        Debug.Log($"🚨 {hero.name} bị phát hiện bởi {name}");
+        SetState(EnemyState.Alert, hero);
+
+        // Gọi ActionSystem xử lý tấn công
+        TryAttackHero(hero);
+    }
+
+    // ============================ COMBAT ============================
+    public bool CanAttack(HeroUnit hero)
+    {
+        if (hero == null || hero.IsDead) return false;
+        int distance = GridManager.Instance.GetDistance(currentPosition, hero.currentPosition);
+        return distance <= AttackRange; // dùng attackRange từ UnitData
+    }
+
+    public void TryAttackHero(HeroUnit hero)
+    {
+        if (!CanAttack(hero)) return;
+        Debug.Log($"⚔️ {name} tấn công {hero.name}");
+        ActionSystem.Instance.AddReaction(new AttackHeroGA(this, hero));
+    }
+
+    // ============================ VISIBILITY ============================
+    public void SetVisibility(bool visible)
+    {
+        if (canvas != null) canvas.enabled = visible;
+        if (col != null) col.enabled = visible;
+    }
+
+    // ============================ UI INTERACTION ============================
     private void OnMouseDown()
     {
         if (TargetingSystem.Instance?.IsTargeting == true)
@@ -58,75 +145,13 @@ public class EnemyUnit : Unit
             SelectedEnemy = null;
 
         SetHighlight(false);
-        Destroy(arrowInstance);
-        Destroy(highlightOverlay);
+        if (arrowInstance != null) Destroy(arrowInstance);
+        if (highlightOverlay != null) Destroy(highlightOverlay);
     }
 
-    private void OnDestroy()
-    {
-        OnDeselect();
-    }
+    private void OnDestroy() => OnDeselect();
 
-    // ============================ COMBAT ============================
-    public override void Die()
-    {
-        Tile tile = GridManager.Instance.GetTileAtPosition(currentPosition);
-        if (tile != null && Random.value <= 0.6f)
-        {
-            GameObject lootPrefab = Resources.Load<GameObject>("Prefabs/ItemLoot");
-            if (lootPrefab != null)
-            {
-                Vector3 basePos = GridManager.Instance.GetWorldPosition(currentPosition);
-                Vector3 offset = tile.GetLocalOffsetForUnit(this);
-                Vector3 spawnPos = basePos + offset + new Vector3(0, 0, -0.5f);
-
-                GameObject lootObj = Instantiate(lootPrefab, spawnPos, Quaternion.identity, tile.transform);
-                SpriteRenderer sr = lootObj.GetComponent<SpriteRenderer>();
-                SpriteRenderer tileSr = tile.GetComponent<SpriteRenderer>();
-                if (sr != null && tileSr != null)
-                    sr.sortingOrder = tileSr.sortingOrder + 1;
-
-                LootItem loot = lootObj.GetComponent<LootItem>();
-                loot?.Init(null, 1, tile);
-                tile.AddLoot(loot);
-            }
-        }
-
-        base.Die();
-    }
-
-    // ============================ TILE ENTRY ============================
-    public override void OnEnterTile(Tile tile)
-    {
-        base.OnEnterTile(tile);
-        if (tile == null) return;
-
-        SetVisibility(tile.IsVisible); // 👈 cập nhật hiển thị theo tầm nhìn
-
-        foreach (var unit in tile.occupyingUnits)
-        {
-            if (unit is HeroUnit hero && !hero.IsDead && !alreadyAttacked.Contains(hero))
-            {
-                alreadyAttacked.Add(hero);
-                hero.IsDetected = true;
-                HeroAlertUI.Instance?.SetDetected(true);
-                Debug.Log($"🚨 {hero.name} bị phát hiện bởi {name}");
-                ActionSystem.Instance.AddReaction(new AttackHeroGA(this, hero));
-            }
-        }
-    }
-
-    // ============================ VISIBILITY ============================
-    public void SetVisibility(bool visible)
-    {
-        if (canvas != null)
-            canvas.enabled = visible;
-
-        if (col != null)
-            col.enabled = visible;
-    }
-
-    // ============================ HIGHLIGHT ============================
+    // ============================ HIGHLIGHT UI ============================
     public void SetHighlight(bool active)
     {
         if (highlightOverlay == null)
@@ -153,6 +178,37 @@ public class EnemyUnit : Unit
 
         if (arrowInstance != null)
             arrowInstance.SetActive(active);
+    }
+
+    // ============================ DEATH & LOOT ============================
+    public override void Die()
+    {
+        DropLoot();
+        base.Die();
+        EnemySystem.Instance.CheckAlertEnd();
+    }
+
+    private void DropLoot()
+    {
+        Tile tile = GridManager.Instance.GetTileAtPosition(currentPosition);
+        if (tile == null || Random.value > 0.6f) return;
+
+        GameObject lootPrefab = Resources.Load<GameObject>("Prefabs/ItemLoot");
+        if (lootPrefab == null) return;
+
+        Vector3 basePos = GridManager.Instance.GetWorldPosition(currentPosition);
+        Vector3 offset = tile.GetLocalOffsetForUnit(this);
+        Vector3 spawnPos = basePos + offset + new Vector3(0, 0, -0.5f);
+
+        GameObject lootObj = Instantiate(lootPrefab, spawnPos, Quaternion.identity, tile.transform);
+        SpriteRenderer sr = lootObj.GetComponent<SpriteRenderer>();
+        SpriteRenderer tileSr = tile.GetComponent<SpriteRenderer>();
+        if (sr != null && tileSr != null)
+            sr.sortingOrder = tileSr.sortingOrder + 1;
+
+        LootItem loot = lootObj.GetComponent<LootItem>();
+        loot?.Init(null, 1, tile);
+        tile.AddLoot(loot);
     }
 
     // ============================ SKILLS ============================

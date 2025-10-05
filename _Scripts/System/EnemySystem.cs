@@ -1,110 +1,259 @@
-
-using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 public class EnemySystem : Singleton<EnemySystem>
 {
-    void OnEnable()
+    private readonly List<EnemyUnit> allEnemies = new();
+    private bool isAlert = false;
+    private bool isPerformingAction = false;
+
+    // ======================================== INIT ========================================
+    private void Start()
     {
-        ActionSystem.AttachPerformer<EnemyTurnGA>(EnemyTurnPerformer);
-        ActionSystem.AttachPerformer<EnemyMoveGA>(EnemyMovePerformer);
+        RefreshEnemies();
     }
 
-    void OnDisable()
+    public void RefreshEnemies()
     {
-        ActionSystem.DetachPerformer<EnemyTurnGA>();
-        ActionSystem.DetachPerformer<EnemyMoveGA>();
+        allEnemies.Clear();
+        allEnemies.AddRange(FindObjectsOfType<EnemyUnit>());
     }
 
-    public List<EnemyUnit> GetAllEnemies()
+    // ======================================== TURN LOGIC ========================================
+    public IEnumerator PerformEnemyTurn()
     {
-        return new List<EnemyUnit>(FindObjectsOfType<EnemyUnit>());
-    }
+        RefreshEnemies();
 
-    private IEnumerator EnemyTurnPerformer(EnemyTurnGA enemyTurnGA)
-    {
-        yield break;
-    }
-
-    private IEnumerator EnemyMovePerformer(EnemyMoveGA enemyMoveGA)
-    {
-        Vector2Int dir = enemyMoveGA.direction;
-        List<EnemyUnit> allEnemies = GetAllEnemies();
-
-        List<EnemyUnit> firstWave = new List<EnemyUnit>();
-        List<EnemyUnit> secondWave = new List<EnemyUnit>();
-
-        // ======= WAVE 1: thử move =======
+        // --- Phase 1: MOVE ALL ---
         foreach (var enemy in allEnemies)
         {
-            // Nếu có hero trong tile → attack luôn, không move
-            Tile currentTile = GridManager.Instance.GetTileAtPosition(enemy.currentPosition);
-            if (currentTile != null)
+            if (enemy == null || enemy.IsDead) continue;
+
+            switch (enemy.currentState)
             {
-                HeroUnit hero = currentTile.occupyingUnits.Find(u => u is HeroUnit) as HeroUnit;
-                if (hero != null && !hero.IsDead)
-                {
-                    ActionSystem.Instance.AddReaction(new AttackHeroGA(enemy, hero));
-                    yield return new WaitForSeconds(0.5f);
-                    continue;
-                }
+                case EnemyState.Patrol:
+                    yield return PatrolMove(enemy);
+                    break;
+
+                case EnemyState.Chase:
+                    yield return ChaseMove(enemy);
+                    break;
+
+                case EnemyState.Alert:
+                    // không di chuyển, chỉ gọi đồng đội
+                    break;
             }
 
-            Vector2Int target = enemy.currentPosition + dir;
-            Tile targetTile = GridManager.Instance.GetTileAtPosition(target);
-            if (targetTile == null || targetTile.IsObstacle)
-                continue;
+            yield return new WaitForSeconds(0.2f);
+        }
 
-            int enemyCount = targetTile.occupyingUnits.FindAll(u => u is EnemyUnit).Count;
-            if (enemyCount < 4 && targetTile.CanAccept(enemy))
+        // --- Phase 2: ATTACK ALL ---
+        yield return PerformAllAttacks();
+        CheckAlertEnd();
+        TurnManager.Instance.EndEnemyTurn();
+    }
+
+    // ======================================== STATE: PATROL ========================================
+    private IEnumerator PatrolMove(EnemyUnit enemy)
+    {
+        Vector2Int dir = HeroSystem.Instance.GetCurrentIntentDirection();
+        Vector2Int nextPos = enemy.currentPosition + dir;
+        Tile targetTile = GridManager.Instance.GetTileAtPosition(nextPos);
+
+        if (targetTile != null && targetTile.CanAccept(enemy) && !targetTile.IsObstacle)
+        {
+            Vector3 worldPos = GridManager.Instance.GetWorldPosition(nextPos);
+            enemy.MoveTo(worldPos, nextPos);
+            enemy.OnEnterTile(targetTile);
+        }
+
+        yield return null;
+    }
+
+    // ======================================== STATE: CHASE ========================================
+    private IEnumerator ChaseMove(EnemyUnit enemy)
+    {
+        if (enemy.detectedHero == null || enemy.detectedHero.IsDead)
+        {
+            enemy.SetState(EnemyState.Patrol);
+            yield break;
+        }
+
+        HeroUnit targetHero = enemy.detectedHero;
+
+        // Nếu trong tầm thì không cần move
+        if (enemy.CanAttack(targetHero))
+            yield break;
+
+        Vector2Int heroPos = targetHero.currentPosition;
+        Vector2Int nextStep = GridManager.Instance.GetStepTowards(enemy.currentPosition, heroPos, 2);
+        Tile targetTile = GridManager.Instance.GetTileAtPosition(nextStep);
+
+        // Nếu tile chính không khả dụng → thử chọn tile lân cận
+        if (targetTile == null || !IsTileAvailableForEnemy(targetTile))
+        {
+            Tile alt = FindNearestAvailableTile(enemy);
+            if (alt != null)
             {
-                Vector3 worldPos = GridManager.Instance.GetWorldPosition(target);
-                enemy.MoveTo(worldPos, target);
-                enemy.OnEnterTile(targetTile);
-                firstWave.Add(enemy);
+                nextStep = alt.gridPosition;
+                targetTile = alt;
             }
             else
             {
-                secondWave.Add(enemy);
+                Debug.Log($" {enemy.name} không có tile trống để di chuyển, giữ nguyên vị trí.");
+                yield break;
             }
-
-            // 🔹 chờ 1 chút để tạo hiệu ứng di chuyển lần lượt
-            yield return new WaitForSeconds(0.2f);
         }
 
-        // ======= WAVE 2: thử lại =======
-        foreach (var enemy in secondWave)
+        Vector3 worldPos = GridManager.Instance.GetWorldPosition(nextStep);
+        enemy.MoveTo(worldPos, nextStep);
+        enemy.OnEnterTile(targetTile);
+
+        yield return null;
+        CheckAlertEnd();
+    }
+
+
+    // ======================================== PHASE: ATTACK ALL ========================================
+    private IEnumerator PerformAllAttacks()
+    {
+        foreach (var enemy in allEnemies)
         {
-            // Kiểm tra lại tile hiện tại, nếu có hero thì attack
-            Tile currentTile = GridManager.Instance.GetTileAtPosition(enemy.currentPosition);
-            if (currentTile != null)
+            if (enemy == null || enemy.IsDead) continue;
+
+            HeroUnit target = GetAttackableHero(enemy);
+            if (target != null)
             {
-                HeroUnit hero = currentTile.occupyingUnits.Find(u => u is HeroUnit) as HeroUnit;
-                if (hero != null && !hero.IsDead)
-                {
-                    ActionSystem.Instance.AddReaction(new AttackHeroGA(enemy, hero));
-                    yield return new WaitForSeconds(0.5f);
-                    continue;
-                }
+                yield return PerformAttackSafely(enemy, target);
+                yield return new WaitForSeconds(0.2f); // delay nhẹ giữa các enemy attack
             }
-
-            Vector2Int target = enemy.currentPosition + dir;
-            Tile targetTile = GridManager.Instance.GetTileAtPosition(target);
-            if (targetTile == null || targetTile.IsObstacle)
-                continue;
-
-            int enemyCount = targetTile.occupyingUnits.FindAll(u => u is EnemyUnit).Count;
-            if (enemyCount < 4 && targetTile.CanAccept(enemy))
-            {
-                Vector3 worldPos = GridManager.Instance.GetWorldPosition(target);
-                enemy.MoveTo(worldPos, target);
-                enemy.OnEnterTile(targetTile);
-            }
-
-            yield return new WaitForSeconds(0.2f);
         }
     }
+
+    // ======================================== ATTACK HANDLER ========================================
+    private IEnumerator PerformAttackSafely(EnemyUnit enemy, HeroUnit hero)
+    {
+        if (enemy == null || hero == null || hero.IsDead) yield break;
+        if (isPerformingAction) yield break;
+
+        isPerformingAction = true; // 🔒 khóa toàn cục
+        Debug.Log($"⚔️ {enemy.name} tấn công {hero.name}");
+
+        yield return ActionSystem.Instance.PerformAndWait(new AttackHeroGA(enemy, hero));
+
+        isPerformingAction = false; // 🔓 mở khóa
+    }
+
+    // ======================================== ALERT MANAGEMENT ========================================
+    public void TriggerAlert(EnemyUnit source)
+    {
+        if (source == null || source.detectedHero == null) return;
+
+        isAlert = true;
+        HeroUnit hero = source.detectedHero;
+
+        foreach (var enemy in allEnemies)
+        {
+            if (enemy == null || enemy.IsDead) continue;
+
+            // Nếu enemy cùng tile hoặc xung quanh tile phát hiện → cũng gán target hero này
+            int dist = GridManager.Instance.GetDistance(enemy.currentPosition, source.currentPosition);
+            if (dist <= 1)
+            {
+                enemy.SetState(EnemyState.Chase, hero);
+            }
+            else
+            {
+                // Các enemy khác vẫn patrol bình thường
+                if (enemy.currentState != EnemyState.Chase)
+                    enemy.SetState(EnemyState.Patrol);
+            }
+        }
+
+        Debug.Log($"🚨 Báo động! Enemy xung quanh {source.name} truy đuổi {hero.name}");
+    }
+
+    public void CheckAlertEnd()
+    {
+        bool anyChasing = false;
+        bool heroVisibleToAny = false;
+
+        foreach (var enemy in allEnemies)
+        {
+            if (enemy == null || enemy.IsDead) continue;
+            if (enemy.currentState != EnemyState.Chase) continue;
+
+            anyChasing = true;
+
+            // ✅ kiểm tra hero còn trong tầm nhìn
+            if (enemy.detectedHero != null && !enemy.detectedHero.IsDead)
+            {
+                int dist = GridManager.Instance.GetDistance(enemy.currentPosition, enemy.detectedHero.currentPosition);
+                if (dist <= enemy.visionRange)
+                {
+                    heroVisibleToAny = true;
+                    break;
+                }
+            }
+        }
+
+        // ❌ không còn ai thấy hero hoặc không còn ai chase → hết cảnh báo
+        if (!anyChasing || !heroVisibleToAny)
+        {
+            isAlert = false;
+            foreach (var e in allEnemies)
+            {
+                if (e == null || e.IsDead) continue;
+                e.SetState(EnemyState.Patrol);
+            }
+
+            Debug.Log("🔔 Hero đã thoát khỏi tầm nhìn, tất cả enemy quay lại tuần tra.");
+        }
+    }
+
+
+    // ======================================== HELPERS ========================================
+    private HeroUnit GetAttackableHero(EnemyUnit enemy)
+    {
+        foreach (var unit in Unit.AllUnits)
+        {
+            if (unit is HeroUnit hero && !hero.IsDead)
+            {
+                int dist = GridManager.Instance.GetDistance(enemy.currentPosition, hero.currentPosition);
+                if (dist <= enemy.AttackRange)
+                    return hero;
+            }
+        }
+        return null;
+    }
+
+    private bool IsTileAvailableForEnemy(Tile tile)
+    {
+        if (tile == null || tile.IsObstacle) return false;
+        int enemyCount = tile.occupyingUnits.FindAll(u => u is EnemyUnit).Count;
+        return enemyCount < 4; 
+    }
+
+    private Tile FindNearestAvailableTile(EnemyUnit enemy)
+    {
+        // tìm tile gần hero nhất nhưng còn slot trống
+        Vector2Int pos = enemy.currentPosition;
+        List<Vector2Int> neighbors = new List<Vector2Int>
+        {
+            pos + Vector2Int.up,
+            pos + Vector2Int.down,
+            pos + Vector2Int.left,
+            pos + Vector2Int.right
+        };
+
+        foreach (var n in neighbors)
+        {
+            Tile tile = GridManager.Instance.GetTileAtPosition(n);
+            if (IsTileAvailableForEnemy(tile))
+                return tile;
+        }
+        return null;
+    }
+
 }

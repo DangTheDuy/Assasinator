@@ -15,7 +15,7 @@ MonoBehaviour:
   itemName: Water
   icon: {fileID: 21300000, guid: 5de80220172c18d4d8d05240e61640d3, type: 3}
   description: 
-  type: 0
+  type: 5
   value: 1
   consumable: 1
   linkedSkill: {fileID: 0}

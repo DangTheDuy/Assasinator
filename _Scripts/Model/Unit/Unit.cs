@@ -13,6 +13,7 @@ public class Unit : MonoBehaviour
 
     public Vector2Int currentPosition { get; set; }
     public Sprite Image => data.Image;
+    public int AttackRange => data.attackRange;
     protected int currentHealth;
     private int currentAttack;
     private int currentDefend;

@@ -188,31 +188,67 @@ public class Tile : MonoBehaviour
         int chance = GetHighestDetectChance();
         if (chance <= 0) return;
 
-        int roll = Random.Range(0, 100);
-        if (roll < chance)
-        {
-            Debug.Log($"Hero bị phát hiện! (roll {roll}/{chance})");
+        Debug.Log($" Hero bước vào tile {gridPosition} có enemy, bắt đầu quét radar (chance {chance}%)");
 
-            if (radarPrefab != null)
+        // Luôn phát radar hiệu ứng mỗi khi hero bước vào ô có enemy
+        Vector3 spawnPos = GridManager.Instance.GetWorldPosition(gridPosition);
+        GameObject radarObj = null;
+        RadarEffect radar = null;
+
+        if (radarPrefab != null)
+        {
+            radarObj = Instantiate(radarPrefab, spawnPos, Quaternion.identity);
+            radar = radarObj.GetComponent<RadarEffect>();
+        }
+
+        // Callback sau khi radar chạy xong
+        System.Action detectionResult = () =>
+        {
+            int roll = Random.Range(0, 100);
+            bool detected = roll < chance;
+
+            if (detected)
             {
-                Vector3 spawnPos = GridManager.Instance.GetWorldPosition(gridPosition);
-                GameObject radarObj = Instantiate(radarPrefab, spawnPos, Quaternion.identity);
-                RadarEffect radar = radarObj.GetComponent<RadarEffect>();
-                if (radar != null)
+                Debug.Log($"🚨 Hero bị phát hiện! (roll {roll}/{chance})");
+
+                HeroUnit detectedHero = null;
+                foreach (var unit in occupyingUnits)
                 {
-                    radar.onFinished = () =>
+                    if (unit is HeroUnit hero && !hero.IsDead)
                     {
-                        foreach (var unit in occupyingUnits)
+                        hero.IsDetected = true;
+                        detectedHero = hero;
+                        HeroAlertUI.Instance?.SetDetected(true);
+                    }
+                }
+
+                if (detectedHero != null)
+                {
+                    foreach (var unit in occupyingUnits)
+                    {
+                        if (unit is EnemyUnit enemy && !enemy.IsDead)
                         {
-                            if (unit is HeroUnit hero && !hero.IsDead)
-                            {
-                                hero.IsDetected = true;
-                                HeroAlertUI.Instance?.SetDetected(true);
-                            }
+                            enemy.SetState(EnemyState.Alert, detectedHero);
+                            EnemySystem.Instance.TriggerAlert(enemy);
                         }
-                    };
+                    }
                 }
             }
+            else
+            {
+                Debug.Log($"😶 Hero KHÔNG bị phát hiện (roll {roll}/{chance})");
+            }
+        };
+
+        // Nếu có radar effect, chờ nó xong rồi roll phát hiện
+        if (radar != null)
+        {
+            radar.onFinished = () => detectionResult.Invoke();
+        }
+        else
+        {
+            // Nếu không có radar effect prefab, roll luôn
+            detectionResult.Invoke();
         }
     }
 

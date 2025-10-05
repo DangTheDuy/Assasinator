@@ -263,6 +263,7 @@ Transform:
   - {fileID: 1947630024}
   - {fileID: 1906927168}
   - {fileID: 1172472750}
+  - {fileID: 1674225896}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &316395225
@@ -737,6 +738,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1172472750}
   - component: {fileID: 1172472751}
+  - component: {fileID: 1172472752}
   m_Layer: 0
   m_Name: VisionSystem
   m_TagString: Untagged
@@ -769,6 +771,18 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 1e928f9be78a0aa479de65db31a3fd2d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &1172472752
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1172472749}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 10a662301673d7f4daf9d673ee60841c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
 --- !u!1 &1221626712
@@ -1085,6 +1099,37 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6d4e054845c989a4aaee68ca14fd8a91, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!1 &1674225895
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1674225896}
+  m_Layer: 0
+  m_Name: EnemyVisionSystem
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1674225896
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1674225895}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 184102632}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1800271050
 GameObject:
   m_ObjectHideFlags: 0
@@ -1591,6 +1636,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   healPotion: {fileID: 11400000, guid: 9e895508814f9fd439c8e4a2b06053ae, type: 2}
   apPotion: {fileID: 11400000, guid: 1f390f7af6b558d4f841369a9246f74c, type: 2}
+  water: {fileID: 11400000, guid: 32d4ed8c659fec04d830bf12e2d13f11, type: 2}
 --- !u!224 &3001174103277476481 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 6660279879848769779, guid: 899c733a012521f4a8c3f66aa03b9fac, type: 3}
