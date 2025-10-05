@@ -80,6 +80,10 @@ public class PerformSystem : MonoBehaviour
         if (fightGA.Caster is HeroUnit heroCaster)
             heroCaster.UpdateHUD();
 
+        if (Unit.SelectedEnemy != null)
+        {
+            Unit.SelectedEnemy.OnDeselect();
+        }
         yield return new WaitForSeconds(0.3f);
     }
 

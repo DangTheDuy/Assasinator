@@ -26,9 +26,11 @@ public class MountainTile : Tile
 
         if (unit is HeroUnit hero)
         {
+            if (hero.IsDead) return;
             hero.visionRange = Mathf.Max(1, hero.visionRange - 1);
+            RecalculateAllHeroesVision();
         }
-        RecalculateAllHeroesVision();
+        
     }
 
     private void RecalculateAllHeroesVision()

@@ -210,7 +210,7 @@ public class HeroUnit : Unit
     {
         if (VisionSystem.Instance != null)
             VisionSystem.Instance.RemoveHeroVision(this);
-
+        HideArrow();
         base.Die();
     }
 
