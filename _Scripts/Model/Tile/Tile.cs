@@ -49,6 +49,9 @@ public class Tile : MonoBehaviour
         IsSeen = false;
         visibleCount = 0;
         ApplyFog();
+
+        if (radarPrefab == null)
+        radarPrefab = Resources.Load<GameObject>("Prefabs/RadarEffect");
     }
 
     private void CreateOverlay()
@@ -185,71 +188,63 @@ public class Tile : MonoBehaviour
 
     public void CheckDetection()
     {
-        int chance = GetHighestDetectChance();
-        if (chance <= 0) return;
+        var allEnemies = EnemySystem.Instance.GetAllEnemies();
+        List<EnemyUnit> enemiesSeeingTile = new List<EnemyUnit>();
 
-        Debug.Log($" Hero bước vào tile {gridPosition} có enemy, bắt đầu quét radar (chance {chance}%)");
-
-        // Luôn phát radar hiệu ứng mỗi khi hero bước vào ô có enemy
-        Vector3 spawnPos = GridManager.Instance.GetWorldPosition(gridPosition);
-        GameObject radarObj = null;
-        RadarEffect radar = null;
-
-        if (radarPrefab != null)
+        foreach (var enemy in allEnemies)
         {
-            radarObj = Instantiate(radarPrefab, spawnPos, Quaternion.identity);
-            radar = radarObj.GetComponent<RadarEffect>();
+            if (enemy == null || enemy.IsDead) continue;
+            // Kiểm tra nếu tile này nằm trong vùng tầm nhìn của enemy (qua VisionSystem)
+            bool inVision = VisionSystem.Instance.IsTileInVision(enemy, gridPosition);
+            if (inVision)
+                enemiesSeeingTile.Add(enemy);
         }
+        if (enemiesSeeingTile.Count == 0) return;
 
-        // Callback sau khi radar chạy xong
-        System.Action detectionResult = () =>
+        // Lấy hero đang đứng trong tile
+        HeroUnit detectedHero = null;
+        foreach (var unit in occupyingUnits)
+        {
+            if (unit is HeroUnit hero && !hero.IsDead)
+            {
+                detectedHero = hero;
+                break;
+            }
+        }
+        if (detectedHero == null) return;
+
+        // Tính tỉ lệ phát hiện cao nhất
+        int highestChance = 0;
+        foreach (var e in enemiesSeeingTile)
+            highestChance = Mathf.Max(highestChance, e.DetectionChance);
+
+        // --- Radar effect ---
+        Vector3 spawnPos = GridManager.Instance.GetWorldPosition(gridPosition);
+        if (radarPrefab == null)
+            radarPrefab = Resources.Load<GameObject>("Prefabs/RadarEffect");
+
+        GameObject radarObj = Instantiate(radarPrefab, spawnPos, Quaternion.identity);
+        RadarEffect radar = radarObj.GetComponent<RadarEffect>();
+
+        // --- Khi radar quét xong ---
+        System.Action doDetection = () =>
         {
             int roll = Random.Range(0, 100);
-            bool detected = roll < chance;
+            bool detected = roll < highestChance;
 
             if (detected)
             {
-                Debug.Log($"🚨 Hero bị phát hiện! (roll {roll}/{chance})");
-
-                HeroUnit detectedHero = null;
-                foreach (var unit in occupyingUnits)
-                {
-                    if (unit is HeroUnit hero && !hero.IsDead)
-                    {
-                        hero.IsDetected = true;
-                        detectedHero = hero;
-                        HeroAlertUI.Instance?.SetDetected(true);
-                    }
-                }
-
-                if (detectedHero != null)
-                {
-                    foreach (var unit in occupyingUnits)
-                    {
-                        if (unit is EnemyUnit enemy && !enemy.IsDead)
-                        {
-                            enemy.SetState(EnemyState.Alert, detectedHero);
-                            EnemySystem.Instance.TriggerAlert(enemy);
-                        }
-                    }
-                }
+                Debug.Log($"🚨 Hero {detectedHero.name} bị phát hiện (roll {roll}/{highestChance})!");
+                detectedHero.IsDetected = true;
+                EnemySystem.Instance.TriggerGlobalChase(detectedHero);
             }
             else
             {
-                Debug.Log($"😶 Hero KHÔNG bị phát hiện (roll {roll}/{chance})");
+                Debug.Log($"😶 Hero chưa bị phát hiện (roll {roll}/{highestChance})");
             }
         };
 
-        // Nếu có radar effect, chờ nó xong rồi roll phát hiện
-        if (radar != null)
-        {
-            radar.onFinished = () => detectionResult.Invoke();
-        }
-        else
-        {
-            // Nếu không có radar effect prefab, roll luôn
-            detectionResult.Invoke();
-        }
+        radar.onFinished = () => doDetection.Invoke();
     }
 
     public void UpdateDetectDisplay()

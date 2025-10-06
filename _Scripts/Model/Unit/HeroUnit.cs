@@ -19,11 +19,7 @@ public class HeroUnit : Unit
     public GameObject apPrefab;
     public GameObject emptyApPrefab;
     public Transform apContainer;
-
-    [Header("Chase Marker")]
-    public ChaseMarkerHandler chaseMarkerHandler; 
-    public Color markerColor = Color.red;          
-
+    
     public bool IsDetected { get; set; }
     public static System.Action<HeroUnit> OnHeroSpawned;
     public int visionRange = 2;
@@ -55,25 +51,10 @@ public class HeroUnit : Unit
         InitAPBar();
         UpdateAP(currentAP);
 
-        // thiết lập marker màu cho hero
-        if (chaseMarkerHandler != null)
-            chaseMarkerHandler.markerColor = markerColor;
-
         HeroHUDManager hudManager = FindObjectOfType<HeroHUDManager>();
         hudManager?.CreateHUD(this);
 
         OnHeroSpawned?.Invoke(this);
-    }
-
-    // =================== HIỂN THỊ MARKER ===================
-    public void ShowChaseMarker()
-    {
-        chaseMarkerHandler?.ShowMarker();
-    }
-
-    public void HideChaseMarker()
-    {
-        chaseMarkerHandler?.HideMarker();
     }
 
     // ================================= SELECT / DESELECT ================================
@@ -143,8 +124,11 @@ public class HeroUnit : Unit
         base.OnEnterTile(tile);
         if (tile == null) return;
 
-        if (tile.occupyingUnits.Exists(u => u is EnemyUnit))
+        if (!EnemySystem.Instance.IsAnyEnemyChasing())
+        {
+            VisionSystem.Instance.CheckHeroInEnemyVision(this);
             tile.CheckDetection();
+        }
 
         if (tile is WaterTile && !canWalkOnWater)
             StartDrowning();
@@ -216,7 +200,6 @@ public class HeroUnit : Unit
     public override void Die()
     {
         HideArrow();
-        HideChaseMarker();
         VisionSystem.Instance?.RemoveHeroVision(this);
         base.Die();
     }

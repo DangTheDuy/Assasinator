@@ -1,12 +1,17 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class EnemySystem : Singleton<EnemySystem>
 {
     private readonly List<EnemyUnit> allEnemies = new();
-    private bool isAlert = false;
     private bool isPerformingAction = false;
+    [Header("UI Tracking")]
+    public TMP_Text enemyStateText;
+
 
     // ======================================== INIT ========================================
     private void Start()
@@ -20,37 +25,38 @@ public class EnemySystem : Singleton<EnemySystem>
         allEnemies.AddRange(FindObjectsOfType<EnemyUnit>());
     }
 
+    public void RegisterEnemy(EnemyUnit enemy)
+    {
+        if (enemy == null) return;
+        if (!allEnemies.Contains(enemy))
+        {
+            allEnemies.Add(enemy);
+        }
+    }
+
     // ======================================== TURN LOGIC ========================================
     public IEnumerator PerformEnemyTurn()
     {
         RefreshEnemies();
-
+        CheckAlertEnd();
+        UpdateEnemyStateUI();
         // --- Phase 1: MOVE ALL ---
         foreach (var enemy in allEnemies)
         {
             if (enemy == null || enemy.IsDead) continue;
-
             switch (enemy.currentState)
             {
                 case EnemyState.Patrol:
                     yield return PatrolMove(enemy);
                     break;
-
                 case EnemyState.Chase:
                     yield return ChaseMove(enemy);
                     break;
-
-                case EnemyState.Alert:
-                    // không di chuyển, chỉ gọi đồng đội
-                    break;
             }
-
             yield return new WaitForSeconds(0.2f);
         }
-
         // --- Phase 2: ATTACK ALL ---
         yield return PerformAllAttacks();
-        CheckAlertEnd();
         TurnManager.Instance.EndEnemyTurn();
     }
 
@@ -137,39 +143,27 @@ public class EnemySystem : Singleton<EnemySystem>
         if (enemy == null || hero == null || hero.IsDead) yield break;
         if (isPerformingAction) yield break;
 
-        isPerformingAction = true; // 🔒 khóa toàn cục
+        isPerformingAction = true;
         Debug.Log($"⚔️ {enemy.name} tấn công {hero.name}");
 
         yield return ActionSystem.Instance.PerformAndWait(new AttackHeroGA(enemy, hero));
 
-        isPerformingAction = false; // 🔓 mở khóa
+        isPerformingAction = false;
     }
 
     // ======================================== ALERT MANAGEMENT ========================================
-    public void TriggerAlert(EnemyUnit source)
-    {
-        if (source == null || source.detectedHero == null) return;
 
-        isAlert = true;
-        HeroUnit hero = source.detectedHero;
+    public void TriggerGlobalChase(HeroUnit hero)
+    {
+        if (hero == null) return;
+        Debug.Log($"⚡ GLOBAL CHASE: Tất cả enemy truy đuổi {hero.name}");
 
         foreach (var enemy in allEnemies)
         {
             if (enemy == null || enemy.IsDead) continue;
-
-            int dist = GridManager.Instance.GetDistance(enemy.currentPosition, source.currentPosition);
-            if (dist <= 1)
-            {
-                enemy.SetState(EnemyState.Chase, hero);
-            }
-            else
-            {
-                if (enemy.currentState != EnemyState.Chase)
-                    enemy.SetState(EnemyState.Patrol);
-            }
+            enemy.SetState(EnemyState.Chase, hero);
         }
-
-        Debug.Log($"🚨 Báo động! Enemy xung quanh {source.name} truy đuổi {hero.name}");
+        UpdateEnemyStateUI(); 
     }
 
     public void CheckAlertEnd()
@@ -181,36 +175,25 @@ public class EnemySystem : Singleton<EnemySystem>
         {
             if (enemy == null || enemy.IsDead) continue;
             if (enemy.currentState != EnemyState.Chase) continue;
-
             anyChasing = true;
-
-            // ✅ kiểm tra hero còn trong tầm nhìn
             if (enemy.detectedHero != null && !enemy.detectedHero.IsDead)
             {
-                int dist = GridManager.Instance.GetDistance(enemy.currentPosition, enemy.detectedHero.currentPosition);
-                if (dist <= enemy.visionRange)
+                if (VisionSystem.Instance.IsTileInVision(enemy, enemy.detectedHero.currentPosition))
                 {
                     heroVisibleToAny = true;
                     break;
                 }
             }
         }
-
-        // ❌ không còn ai thấy hero hoặc không còn ai chase → hết cảnh báo
         if (!anyChasing || !heroVisibleToAny)
         {
-            isAlert = false;
             foreach (var e in allEnemies)
             {
                 if (e == null || e.IsDead) continue;
                 e.SetState(EnemyState.Patrol);
             }
-
-            Debug.Log("🔔 Hero đã thoát khỏi tầm nhìn, tất cả enemy quay lại tuần tra.");
         }
     }
-
-
     // ======================================== HELPERS ========================================
     private HeroUnit GetAttackableHero(EnemyUnit enemy)
     {
@@ -230,7 +213,7 @@ public class EnemySystem : Singleton<EnemySystem>
     {
         if (tile == null || tile.IsObstacle) return false;
         int enemyCount = tile.occupyingUnits.FindAll(u => u is EnemyUnit).Count;
-        return enemyCount < 4; 
+        return enemyCount < 4;
     }
 
     private Tile FindNearestAvailableTile(EnemyUnit enemy)
@@ -252,6 +235,50 @@ public class EnemySystem : Singleton<EnemySystem>
                 return tile;
         }
         return null;
+    }
+
+    public List<EnemyUnit> GetAllEnemies()
+    {
+        return allEnemies;
+    }
+
+    public bool IsAnyEnemyChasing()
+    {
+        foreach (var enemy in allEnemies)
+        {
+            if (enemy == null || enemy.IsDead) continue;
+            if (enemy.currentState == EnemyState.Chase)
+                return true;
+        }
+        return false;
+    }
+    
+    public void UpdateEnemyStateUI()
+    {
+        if (enemyStateText == null) return;
+
+        string stateSummary = "";
+        int patrolCount = 0,  chaseCount = 0;
+
+        foreach (var enemy in allEnemies)
+        {
+            if (enemy == null || enemy.IsDead) continue;
+
+            switch (enemy.currentState)
+            {
+                case EnemyState.Patrol:
+                    patrolCount++;
+                    break;
+                case EnemyState.Chase:
+                    chaseCount++;
+                    break;
+            }
+        }
+
+        stateSummary = $" Patrol: {patrolCount}\n" +
+                    $" Chase: {chaseCount}";
+
+        enemyStateText.text = stateSummary;
     }
 
 }

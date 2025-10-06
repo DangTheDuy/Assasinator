@@ -36,7 +36,7 @@ public class TurnManager : Singleton<TurnManager>
     {
         if (CurrentPhase != TurnPhase.Enemy) return;
 
-        Debug.Log($"[TurnManager] Enemy Turn ended → Hero Turn {CurrentTurn + 1} begins");
+        Debug.Log($"Turn {CurrentTurn + 1} begins");
         OnTurnEnd?.Invoke(TurnPhase.Enemy);
         CurrentTurn++;
         OnNewTurnStarted?.Invoke(CurrentTurn);

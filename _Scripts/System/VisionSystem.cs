@@ -103,4 +103,44 @@ public class VisionSystem : Singleton<VisionSystem>
             if (e2 <= dx) { err += dx; y0 += sy; }
         }
     }
+
+    public bool IsTileInVision(EnemyUnit enemy, Vector2Int tilePos)
+    {
+        if (enemy == null) return false;
+        int dist = GridManager.Instance.GetDistance(enemy.currentPosition, tilePos);
+        return dist <= enemy.visionRange;
+    }
+
+    public void CheckHeroInEnemyVision(HeroUnit hero)
+    {
+        if (hero == null || hero.IsDead) return;
+        var allEnemies = EnemySystem.Instance.GetAllEnemies();
+        if (allEnemies == null || allEnemies.Count == 0) return;
+
+        foreach (var e in allEnemies)
+        {
+            if (e == null || e.IsDead) continue;
+            if (e.currentState == EnemyState.Chase)
+            {
+                return;
+            }
+        }
+
+        Tile heroTile = GridManager.Instance.GetTileAtPosition(hero.currentPosition);
+        if (heroTile == null) return;
+
+        bool inEnemyVision = false;
+        foreach (var enemy in allEnemies)
+        {
+            if (enemy == null || enemy.IsDead) continue;
+            if (IsTileInVision(enemy, hero.currentPosition))
+            {
+                inEnemyVision = true;
+                break;
+            }
+        }
+        if (inEnemyVision)
+            heroTile.CheckDetection();
+    }
+
 }
