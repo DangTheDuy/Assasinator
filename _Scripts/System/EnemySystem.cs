@@ -157,7 +157,6 @@ public class EnemySystem : Singleton<EnemySystem>
         {
             if (enemy == null || enemy.IsDead) continue;
 
-            // Nếu enemy cùng tile hoặc xung quanh tile phát hiện → cũng gán target hero này
             int dist = GridManager.Instance.GetDistance(enemy.currentPosition, source.currentPosition);
             if (dist <= 1)
             {
@@ -165,7 +164,6 @@ public class EnemySystem : Singleton<EnemySystem>
             }
             else
             {
-                // Các enemy khác vẫn patrol bình thường
                 if (enemy.currentState != EnemyState.Chase)
                     enemy.SetState(EnemyState.Patrol);
             }

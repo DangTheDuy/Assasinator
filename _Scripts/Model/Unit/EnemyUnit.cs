@@ -12,14 +12,19 @@ public enum EnemyState
 
 public class EnemyUnit : Unit
 {
+    [Header("Enemy Config")]
     public int visionRange = 2;
-    public int DetectionChance => data.detectionChance;
     public EnemyState currentState = EnemyState.Patrol;
     public HeroUnit detectedHero;  
+    public int DetectionChance => data.detectionChance;
 
-    private readonly HashSet<HeroUnit> alreadyAttacked = new();
+
+    [Header("UI / Marker")]
+    public ChaseMarkerHandler chaseMarkerHandler; // Gán marker prefab sẵn
     private GameObject highlightOverlay;
     private GameObject arrowInstance;
+
+    private readonly HashSet<HeroUnit> alreadyAttacked = new();
     private Canvas canvas;
     private Collider2D col;
 
@@ -40,6 +45,7 @@ public class EnemyUnit : Unit
         {
             case EnemyState.Patrol:
                 Debug.Log($"🟢 {name} quay lại tuần tra.");
+                HideChaseMarker();
                 break;
 
             case EnemyState.Alert:
@@ -49,6 +55,7 @@ public class EnemyUnit : Unit
 
             case EnemyState.Chase:
                 Debug.Log($"⚡ {name} bắt đầu truy đuổi {detectedHero?.name}!");
+                ShowChaseMarker();
                 break;
         }
     }
@@ -81,7 +88,6 @@ public class EnemyUnit : Unit
         Debug.Log($"🚨 {hero.name} bị phát hiện bởi {name}");
         SetState(EnemyState.Alert, hero);
 
-        // Gọi ActionSystem xử lý tấn công
         TryAttackHero(hero);
     }
 
@@ -90,7 +96,7 @@ public class EnemyUnit : Unit
     {
         if (hero == null || hero.IsDead) return false;
         int distance = GridManager.Instance.GetDistance(currentPosition, hero.currentPosition);
-        return distance <= AttackRange; // dùng attackRange từ UnitData
+        return distance <= AttackRange;
     }
 
     public void TryAttackHero(HeroUnit hero)
@@ -105,6 +111,34 @@ public class EnemyUnit : Unit
     {
         if (canvas != null) canvas.enabled = visible;
         if (col != null) col.enabled = visible;
+    }
+
+    // ============================ CHASE MARKER ============================
+    private void ShowChaseMarker()
+    {
+        if(chaseMarkerHandler == null)
+        {
+            Debug.LogWarning($"{name} thiếu chaseMarkerHandler!");
+            return;
+        }
+        if(detectedHero == null)
+        {
+            Debug.LogWarning($"{name} chưa có detectedHero!");
+            return;
+        }
+
+        chaseMarkerHandler.markerColor = detectedHero.markerColor;
+        chaseMarkerHandler.ShowMarker();
+        Debug.Log($"{name} hiện marker màu {detectedHero.markerColor}");
+    }
+
+
+    private void HideChaseMarker()
+    {
+        if (chaseMarkerHandler != null)
+        {
+            chaseMarkerHandler.HideMarker();
+        }
     }
 
     // ============================ UI INTERACTION ============================
@@ -185,6 +219,7 @@ public class EnemyUnit : Unit
     {
         DropLoot();
         base.Die();
+        HideChaseMarker(); // ẩn marker khi chết
         EnemySystem.Instance.CheckAlertEnd();
     }
 

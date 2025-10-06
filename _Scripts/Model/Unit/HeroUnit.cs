@@ -1,8 +1,8 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using DG.Tweening;
 using UnityEngine.UI;
+using DG.Tweening;
 
 [System.Serializable]
 public class HeroUnit : Unit
@@ -20,6 +20,10 @@ public class HeroUnit : Unit
     public GameObject emptyApPrefab;
     public Transform apContainer;
 
+    [Header("Chase Marker")]
+    public ChaseMarkerHandler chaseMarkerHandler; 
+    public Color markerColor = Color.red;          
+
     public bool IsDetected { get; set; }
     public static System.Action<HeroUnit> OnHeroSpawned;
     public int visionRange = 2;
@@ -31,9 +35,9 @@ public class HeroUnit : Unit
 
     // ================================= WATER SYSTEM ====================================
     [Header("Water & Drowning")]
-    public bool canWalkOnWater = false;     // buff cho phép đi trên nước
-    public bool isDrowning = false;         // đang đuối nước
-    public int drownTurnsLeft = 0;          // số lượt còn lại trước khi chết
+    public bool canWalkOnWater = false;
+    public bool isDrowning = false;
+    public int drownTurnsLeft = 0;
 
     // ==================================== SETUP ========================================
     public override void Setup(UnitData data)
@@ -41,22 +45,35 @@ public class HeroUnit : Unit
         base.Setup(data);
         VisionSystem.Instance.UpdateDiamondVision(currentPosition, visionRange, null, -1, this);
 
-        // kỹ năng
         skills.Clear();
         if (data.skills != null && data.skills.Count > 0)
             skills.AddRange(data.skills);
         else
             Debug.LogWarning($"{data.unitName} chưa có skill nào trong UnitData!");
 
-        // AP & HUD
         currentAP = data.maxAP;
         InitAPBar();
         UpdateAP(currentAP);
 
+        // thiết lập marker màu cho hero
+        if (chaseMarkerHandler != null)
+            chaseMarkerHandler.markerColor = markerColor;
+
         HeroHUDManager hudManager = FindObjectOfType<HeroHUDManager>();
-        if (hudManager != null) hudManager.CreateHUD(this);
+        hudManager?.CreateHUD(this);
 
         OnHeroSpawned?.Invoke(this);
+    }
+
+    // =================== HIỂN THỊ MARKER ===================
+    public void ShowChaseMarker()
+    {
+        chaseMarkerHandler?.ShowMarker();
+    }
+
+    public void HideChaseMarker()
+    {
+        chaseMarkerHandler?.HideMarker();
     }
 
     // ================================= SELECT / DESELECT ================================
@@ -70,10 +87,9 @@ public class HeroUnit : Unit
             SelectedEnemy = null;
         }
 
-        if (SelectedHero != null && SelectedHero != this)
-            SelectedHero.OnDeselect();
-
+        SelectedHero?.OnDeselect();
         SelectedHero = this;
+
         UIManager.Instance.ShowSkillBar(this);
         ShowArrow();
         HighlightMovementTiles();
@@ -100,12 +116,11 @@ public class HeroUnit : Unit
     // ===================================== MOVE =========================================
     public override void MoveTo(Vector3 worldPos, Vector2Int gridPos)
     {
-        if ( isDrowning) return;
+        if (isDrowning) return;
 
         Tile targetTile = GridManager.Instance.GetTileAtPosition(gridPos);
         if (targetTile == null) return;
 
-        // chặn đi vào nước nếu không có buff
         if (targetTile is WaterTile && !canWalkOnWater)
         {
             Debug.Log($"{data.unitName} không thể đi vào ô nước!");
@@ -128,16 +143,14 @@ public class HeroUnit : Unit
         base.OnEnterTile(tile);
         if (tile == null) return;
 
-        // check enemy detect
-        bool hasEnemy = tile.occupyingUnits.Exists(u => u is EnemyUnit);
-        if (hasEnemy) tile.CheckDetection();
+        if (tile.occupyingUnits.Exists(u => u is EnemyUnit))
+            tile.CheckDetection();
 
-        // check nước
         if (tile is WaterTile && !canWalkOnWater)
             StartDrowning();
     }
 
-    // ================================== DROWNING LOGIC ==================================
+    // ================== DROWNING LOGIC ==================
     public void EnableWaterWalk(int turns)
     {
         canWalkOnWater = true;
@@ -147,8 +160,7 @@ public class HeroUnit : Unit
     private IEnumerator WaterWalkBuff(int turns)
     {
         int startTurn = TurnManager.Instance.CurrentTurn;
-        yield return new WaitUntil(() => 
-            TurnManager.Instance.CurrentTurn >= startTurn + turns );
+        yield return new WaitUntil(() => TurnManager.Instance.CurrentTurn >= startTurn + turns);
         EndWaterWalkEffect();
     }
 
@@ -186,45 +198,34 @@ public class HeroUnit : Unit
         if (target == null || !target.isDrowning) return false;
 
         int dist = GridManager.Instance.GetDistance(currentPosition, target.currentPosition);
-        if (dist > 1)
-        {
-            Debug.Log($"{data.unitName} quá xa để cứu {target.data.unitName}!");
-            return false;
-        }
+        if (dist > 1) return false;
 
         target.isDrowning = false;
         target.drownTurnsLeft = 0;
         target.GetComponent<SpriteRenderer>().color = Color.white;
 
-        // kéo lên cùng ô
         target.currentPosition = currentPosition;
         target.transform.position = transform.position + new Vector3(0, 0.2f, 0);
         GridManager.Instance.GetTileAtPosition(currentPosition).SetOccupied(target);
 
         SpendAP(2);
-        Debug.Log($"{data.unitName} đã cứu {target.data.unitName} khỏi đuối!");
         return true;
     }
+
     // =================== DIE ================================
     public override void Die()
     {
-        if (VisionSystem.Instance != null)
-            VisionSystem.Instance.RemoveHeroVision(this);
         HideArrow();
+        HideChaseMarker();
+        VisionSystem.Instance?.RemoveHeroVision(this);
         base.Die();
     }
 
-    // ================================== AP SYSTEM =======================================
+    // =================== AP / HUD / ARROW ============================
     private void InitAPBar()
     {
-        if (apPrefab == null || apContainer == null)
-        {
-            Debug.LogWarning("Thiếu prefab hoặc container AP!");
-            return;
-        }
-
-        foreach (Transform child in apContainer)
-            Destroy(child.gameObject);
+        if (apPrefab == null || apContainer == null) return;
+        foreach (Transform child in apContainer) Destroy(child.gameObject);
 
         for (int i = 0; i < data.maxAP; i++)
             Instantiate(apPrefab, apContainer);
@@ -234,9 +235,7 @@ public class HeroUnit : Unit
     {
         if (apContainer == null) return;
         int maxAP = data.maxAP;
-
-        foreach (Transform child in apContainer)
-            Destroy(child.gameObject);
+        foreach (Transform child in apContainer) Destroy(child.gameObject);
 
         for (int i = 0; i < maxAP; i++)
         {
@@ -249,14 +248,12 @@ public class HeroUnit : Unit
     }
 
     public bool HasEnoughAP(int amount) => currentAP >= amount;
-
     public void SpendAP(int amount)
     {
         currentAP = Mathf.Max(0, currentAP - amount);
         UpdateAP(currentAP);
         UpdateHUD();
     }
-
     public void RefillAP()
     {
         currentAP = data.maxAP;
@@ -264,38 +261,33 @@ public class HeroUnit : Unit
         UpdateHUD();
     }
 
-    // ================================= INVENTORY =======================================
+    // =================== INVENTORY ============================
     public void UseItem(ItemStack stack)
     {
         if (stack == null || stack.itemData == null) return;
-
         ItemData item = stack.itemData;
+
         switch (item.type)
         {
             case ItemType.Heal:
                 if (!stack.Consume()) return;
                 currentHealth = Mathf.Min(data.maxHealth, currentHealth + item.value);
                 break;
-
             case ItemType.RestoreAP:
                 if (!stack.Consume()) return;
                 currentAP = Mathf.Min(data.maxAP, currentAP + item.value);
                 break;
-
             case ItemType.Shuriken:
                 if (item.linkedSkill != null)
                     TargetingSystem.Instance.EnterTargetMode(this, item.linkedSkill, stack);
                 return;
             case ItemType.Water:
-            if (!stack.Consume()) return;
-            Debug.Log($"{name} dùng {item.itemName} → có thể đi trên nước trong 1 lượt!");
-            EnableWaterWalk(1);
-            break;
-
+                if (!stack.Consume()) return;
+                EnableWaterWalk(1);
+                break;
         }
 
         if (stack.quantity <= 0) inventory.Remove(stack);
-        Debug.Log($"{name} dùng {item.itemName}, còn lại {stack.quantity}");
         UpdateHUD();
     }
 
@@ -309,7 +301,6 @@ public class HeroUnit : Unit
         hud?.UpdateHeroItems(this, inventory);
     }
 
-    // ================================= ARROW ===========================================
     private void ShowArrow()
     {
         if (arrowInstance == null)
@@ -321,13 +312,8 @@ public class HeroUnit : Unit
         arrowInstance.SetActive(true);
     }
 
-    private void HideArrow()
-    {
-        if (arrowInstance != null)
-            arrowInstance.SetActive(false);
-    }
+    private void HideArrow() => arrowInstance?.SetActive(false);
 
-    // =============================== TILE HIGHLIGHT =====================================
     private void HighlightMovementTiles()
     {
         foreach (var kv in GridManager.Instance.tiles)
@@ -348,11 +334,9 @@ public class HeroUnit : Unit
     public void UpdateHUD()
     {
         var hud = FindObjectOfType<HeroHUDManager>();
-        if (hud == null) return;
-
-        hud.UpdateHeroHP(this, CurrentHP, data.maxHealth);
-        hud.UpdateHeroAP(this, currentAP, data.maxAP);
-        hud.UpdateHeroItems(this, inventory);
+        hud?.UpdateHeroHP(this, CurrentHP, data.maxHealth);
+        hud?.UpdateHeroAP(this, currentAP, data.maxAP);
+        hud?.UpdateHeroItems(this, inventory);
     }
 
     // =============================== ACCESS ============================================
