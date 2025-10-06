@@ -4,15 +4,12 @@ using UnityEngine.UI;
 using DG.Tweening;
 
 public enum EnemyState
-{
-    Patrol,        
-    Chase      
-}
+{ Patrol, Chase, LostTrack  }
 
 public class EnemyUnit : Unit
 {
     [Header("Enemy Config")]
-    public int visionRange = 2;
+    public int visionRange = 1;
     public EnemyState currentState = EnemyState.Patrol;
     public HeroUnit detectedHero;  
     public int DetectionChance => data.detectionChance;

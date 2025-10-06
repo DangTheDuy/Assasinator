@@ -85,9 +85,7 @@ public class EnemySystem : Singleton<EnemySystem>
             enemy.SetState(EnemyState.Patrol);
             yield break;
         }
-
         HeroUnit targetHero = enemy.detectedHero;
-
         // Nếu trong tầm thì không cần move
         if (enemy.CanAttack(targetHero))
             yield break;
@@ -95,7 +93,6 @@ public class EnemySystem : Singleton<EnemySystem>
         Vector2Int heroPos = targetHero.currentPosition;
         Vector2Int nextStep = GridManager.Instance.GetStepTowards(enemy.currentPosition, heroPos, 2);
         Tile targetTile = GridManager.Instance.GetTileAtPosition(nextStep);
-
         // Nếu tile chính không khả dụng → thử chọn tile lân cận
         if (targetTile == null || !IsTileAvailableForEnemy(targetTile))
         {
@@ -111,15 +108,12 @@ public class EnemySystem : Singleton<EnemySystem>
                 yield break;
             }
         }
-
         Vector3 worldPos = GridManager.Instance.GetWorldPosition(nextStep);
         enemy.MoveTo(worldPos, nextStep);
         enemy.OnEnterTile(targetTile);
-
         yield return null;
         CheckAlertEnd();
     }
-
 
     // ======================================== PHASE: ATTACK ALL ========================================
     private IEnumerator PerformAllAttacks()
@@ -132,7 +126,7 @@ public class EnemySystem : Singleton<EnemySystem>
             if (target != null)
             {
                 yield return PerformAttackSafely(enemy, target);
-                yield return new WaitForSeconds(0.2f); // delay nhẹ giữa các enemy attack
+                yield return new WaitForSeconds(0.15f); 
             }
         }
     }
@@ -142,12 +136,8 @@ public class EnemySystem : Singleton<EnemySystem>
     {
         if (enemy == null || hero == null || hero.IsDead) yield break;
         if (isPerformingAction) yield break;
-
         isPerformingAction = true;
-        Debug.Log($"⚔️ {enemy.name} tấn công {hero.name}");
-
         yield return ActionSystem.Instance.PerformAndWait(new AttackHeroGA(enemy, hero));
-
         isPerformingAction = false;
     }
 
