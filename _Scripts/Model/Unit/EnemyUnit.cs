@@ -11,8 +11,12 @@ public class EnemyUnit : Unit
     [Header("Enemy Config")]
     public int visionRange = 1;
     public EnemyState currentState = EnemyState.Patrol;
-    public HeroUnit detectedHero;  
+    public HeroUnit detectedHero;
     public int DetectionChance => data.detectionChance;
+    [HideInInspector] public int lostTrackTurnsLeft = 0;
+
+    [Header("Tracking")]
+    public List<Vector2Int> heroVisibleHistory = new();
 
 
     [Header("UI / Marker")]
@@ -40,23 +44,42 @@ public class EnemyUnit : Unit
     // ============================ STATE MACHINE ============================
     public void SetState(EnemyState newState, HeroUnit target = null)
     {
-        currentState = newState;
-        detectedHero = target;
+        if (currentState == newState)
+            return;
 
-        switch (currentState)
+        switch (newState)
         {
-            case EnemyState.Patrol:
-                Debug.Log($"🟢 {name} quay lại tuần tra.");
+            case EnemyState.Chase:
+                if (currentState == EnemyState.Patrol)
+                    visionRange += 1;
+
+                    if (currentState == EnemyState.LostTrack)
+                    {
+                        heroVisibleHistory.Clear();
+
+                        // Ngay lập tức lưu vị trí hero hiện tại vào history
+                        if (target != null)
+                            heroVisibleHistory.Add(target.currentPosition);
+                    }
                 break;
 
-            case EnemyState.Chase:
+            case EnemyState.LostTrack:
+                break;
+
+
+            case EnemyState.Patrol:
+                heroVisibleHistory.Clear();
+                if (currentState != EnemyState.Patrol)
+                    visionRange = Mathf.Max(1, visionRange - 1);
+                detectedHero = null; 
                 break;
         }
-        EnemySystem.Instance?.UpdateEnemyStateUI();
 
+        currentState = newState;
+        detectedHero = target;
+        EnemySystem.Instance?.UpdateEnemyStateUI();
     }
 
-    public bool HasTarget() => detectedHero != null && !detectedHero.IsDead;
 
     // ============================ TILE ENTRY ============================
     public override void OnEnterTile(Tile tile)
@@ -165,15 +188,12 @@ public class EnemyUnit : Unit
             overlayImage.color = new Color(1f, 0f, 0f, 0.5f);
             overlayImage.raycastTarget = false;
         }
-
         highlightOverlay.SetActive(active);
-
         if (active && arrowInstance == null)
         {
             arrowInstance = Instantiate(Resources.Load<GameObject>("Prefabs/ArrowUI"));
             arrowInstance.transform.Find("ArrowContainer").GetComponent<ArrowFollowUnit>().target = transform;
         }
-
         if (arrowInstance != null)
             arrowInstance.SetActive(active);
     }
@@ -218,4 +238,37 @@ public class EnemyUnit : Unit
             Resources.Load<SkillData>("Skills/FightSkill")
         };
     }
+
+    public void RegisterHeroMovementListener()
+    {
+        HeroUnit.OnHeroMoved -= OnHeroMovedHandler; // đảm bảo không đăng ký trùng
+        HeroUnit.OnHeroMoved += OnHeroMovedHandler;
+    }
+
+    private void OnHeroMovedHandler(HeroUnit hero, Vector2Int pos)
+    {
+        if (IsDead || hero == null || hero.IsDead) return;
+
+        if (VisionSystem.Instance.IsTileInVision(this, pos))
+        {
+            if (!heroVisibleHistory.Contains(pos))
+                heroVisibleHistory.Add(pos);
+        }
+    }
+    
+    public void EvaluateVisionForEnemy()
+{
+        foreach (var hero in HeroUnit.GetAllHeroes())
+        {
+            if (hero.IsDead) continue;
+
+            if (VisionSystem.Instance.IsTileInVision(this, hero.currentPosition))
+            {
+                if (!heroVisibleHistory.Contains(hero.currentPosition))
+                    heroVisibleHistory.Add(hero.currentPosition);
+            }
+        }
+}
+
+
 }

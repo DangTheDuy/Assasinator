@@ -170,9 +170,6 @@ public class Unit : MonoBehaviour
         int effectiveDamage = Mathf.Max(0, amount - defensePower);
         currentHealth -= effectiveDamage;
         currentHealth = Mathf.Max(0, currentHealth);
-
-        Debug.Log($"{name} HP còn lại: {currentHealth}");
-
         if (currentHealth <= 0 && !IsDead)
         {
             Die();

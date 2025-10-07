@@ -23,6 +23,10 @@ public class EnemySystem : Singleton<EnemySystem>
     {
         allEnemies.Clear();
         allEnemies.AddRange(FindObjectsOfType<EnemyUnit>());
+        foreach (var enemy in allEnemies)
+        {
+            enemy.RegisterHeroMovementListener();
+        }
     }
 
     public void RegisterEnemy(EnemyUnit enemy)
@@ -37,45 +41,79 @@ public class EnemySystem : Singleton<EnemySystem>
     // ======================================== TURN LOGIC ========================================
     public IEnumerator PerformEnemyTurn()
     {
+        foreach (var enemy in allEnemies)
+        {
+            enemy.EvaluateVisionForEnemy();
+        }
+
         RefreshEnemies();
-        CheckAlertEnd();
+        CheckAlertEnd(); // Cập nhật state Chase → LostTrack nếu cần
         UpdateEnemyStateUI();
-        // --- Phase 1: MOVE ALL ---
+
+        // --- Giai đoạn hành động ---
         foreach (var enemy in allEnemies)
         {
             if (enemy == null || enemy.IsDead) continue;
+
             switch (enemy.currentState)
             {
                 case EnemyState.Patrol:
                     yield return PatrolMove(enemy);
                     break;
+
                 case EnemyState.Chase:
                     yield return ChaseMove(enemy);
                     break;
+
+                case EnemyState.LostTrack:
+                    yield return LostTrackMove(enemy);
+                    break;
             }
+
             yield return new WaitForSeconds(0.2f);
         }
-        // --- Phase 2: ATTACK ALL ---
+
+        // --- Sau khi di chuyển, kiểm tra lại xem có thấy hero không ---
+        yield return new WaitForSeconds(0.3f);
+        EvaluatePostMoveVision();
+        UpdateEnemyStateUI();
+
+        // --- Giai đoạn tấn công ---
         yield return PerformAllAttacks();
+
         TurnManager.Instance.EndEnemyTurn();
     }
 
+
     // ======================================== STATE: PATROL ========================================
     private IEnumerator PatrolMove(EnemyUnit enemy)
+{
+    Vector2Int dir = HeroSystem.Instance.GetCurrentIntentDirection();
+    Vector2Int nextPos = enemy.currentPosition + dir;
+    Tile targetTile = GridManager.Instance.GetTileAtPosition(nextPos);
+
+    if (targetTile != null && targetTile.CanAccept(enemy) && !targetTile.IsObstacle)
     {
-        Vector2Int dir = HeroSystem.Instance.GetCurrentIntentDirection();
-        Vector2Int nextPos = enemy.currentPosition + dir;
-        Tile targetTile = GridManager.Instance.GetTileAtPosition(nextPos);
-
-        if (targetTile != null && targetTile.CanAccept(enemy) && !targetTile.IsObstacle)
-        {
-            Vector3 worldPos = GridManager.Instance.GetWorldPosition(nextPos);
-            enemy.MoveTo(worldPos, nextPos);
-            enemy.OnEnterTile(targetTile);
-        }
-
-        yield return null;
+        Vector3 worldPos = GridManager.Instance.GetWorldPosition(nextPos);
+        enemy.MoveTo(worldPos, nextPos);
+        enemy.OnEnterTile(targetTile);
     }
+
+    // --- Cập nhật heroVisibleHistory nếu thấy hero ---
+    foreach (var hero in HeroUnit.GetAllHeroes())
+    {
+        if (hero.IsDead) continue;
+        if (VisionSystem.Instance.IsTileInVision(enemy, hero.currentPosition))
+        {
+            if (!enemy.heroVisibleHistory.Contains(hero.currentPosition))
+                enemy.heroVisibleHistory.Add(hero.currentPosition);
+        }
+    }
+
+    yield return null;
+}
+
+
 
     // ======================================== STATE: CHASE ========================================
     private IEnumerator ChaseMove(EnemyUnit enemy)
@@ -115,6 +153,92 @@ public class EnemySystem : Singleton<EnemySystem>
         CheckAlertEnd();
     }
 
+private IEnumerator LostTrackMove(EnemyUnit enemy)
+{
+    if (enemy.heroVisibleHistory.Count == 0)
+    {
+        enemy.SetState(EnemyState.Patrol);
+        yield break;
+    }
+
+    // Chọn ô lịch sử xa nhất
+    Vector2Int bestTarget = enemy.heroVisibleHistory[0];
+    float bestDist = -1f;
+    foreach (var trace in enemy.heroVisibleHistory)
+    {
+        float dist = GridManager.Instance.GetDistance(enemy.currentPosition, trace);
+        if (dist > bestDist)
+        {
+            bestTarget = trace;
+            bestDist = dist;
+        }
+    }
+
+    int steps = Mathf.Min(2, Mathf.CeilToInt(bestDist));
+
+    for (int i = 0; i < steps; i++)
+    {
+        // Kiểm tra tầm nhìn hero trước khi đi bước tiếp
+        HeroUnit seenHero = null;
+        foreach (var hero in HeroUnit.GetAllHeroes())
+        {
+            if (hero.IsDead) continue;
+            if (VisionSystem.Instance.IsTileInVision(enemy, hero.currentPosition))
+            {
+                seenHero = hero;
+                if (!enemy.heroVisibleHistory.Contains(hero.currentPosition))
+                    enemy.heroVisibleHistory.Add(hero.currentPosition);
+
+                // Chuyển trạng thái Chase ngay, nhưng vẫn đi bước còn lại
+                if (enemy.currentState != EnemyState.Chase)
+                    enemy.SetState(EnemyState.Chase, hero);
+                break;
+            }
+        }
+
+        // Nếu đã tới ô mục tiêu hoặc không còn bước → dừng
+        if (enemy.currentPosition == bestTarget)
+            break;
+
+        Vector2Int nextStep = GridManager.Instance.GetStepTowards(enemy.currentPosition, bestTarget, 1);
+        Tile targetTile = GridManager.Instance.GetTileAtPosition(nextStep);
+        if (targetTile == null || !IsTileAvailableForEnemy(targetTile))
+            break;
+
+        Vector3 worldPos = GridManager.Instance.GetWorldPosition(nextStep);
+        enemy.MoveTo(worldPos, nextStep);
+        enemy.OnEnterTile(targetTile);
+
+        yield return new WaitForSeconds(0.1f);
+    }
+
+    // Sau khi đi xong, nếu vẫn chưa thấy hero thì quay lại Patrol
+    bool stillSeesHero = false;
+    foreach (var hero in HeroUnit.GetAllHeroes())
+    {
+        if (hero.IsDead) continue;
+        if (VisionSystem.Instance.IsTileInVision(enemy, hero.currentPosition))
+        {
+            stillSeesHero = true;
+            if (!enemy.heroVisibleHistory.Contains(hero.currentPosition))
+                enemy.heroVisibleHistory.Add(hero.currentPosition);
+            if (enemy.currentState != EnemyState.Chase)
+                enemy.SetState(EnemyState.Chase, hero);
+            break;
+        }
+    }
+
+    if (!stillSeesHero && enemy.currentState == EnemyState.LostTrack)
+    {
+        enemy.SetState(EnemyState.Patrol);
+        Debug.Log($"🟢 {enemy.name} không thấy hero → quay lại PATROL");
+    }
+}
+
+
+
+
+
     // ======================================== PHASE: ATTACK ALL ========================================
     private IEnumerator PerformAllAttacks()
     {
@@ -126,7 +250,7 @@ public class EnemySystem : Singleton<EnemySystem>
             if (target != null)
             {
                 yield return PerformAttackSafely(enemy, target);
-                yield return new WaitForSeconds(0.15f); 
+                yield return new WaitForSeconds(0.15f);
             }
         }
     }
@@ -153,37 +277,58 @@ public class EnemySystem : Singleton<EnemySystem>
             if (enemy == null || enemy.IsDead) continue;
             enemy.SetState(EnemyState.Chase, hero);
         }
-        UpdateEnemyStateUI(); 
+        UpdateEnemyStateUI();
     }
 
     public void CheckAlertEnd()
     {
-        bool anyChasing = false;
-        bool heroVisibleToAny = false;
+        bool anySeesHero = false;
+        HeroUnit detectedHero = null;
 
         foreach (var enemy in allEnemies)
         {
             if (enemy == null || enemy.IsDead) continue;
-            if (enemy.currentState != EnemyState.Chase) continue;
-            anyChasing = true;
+
             if (enemy.detectedHero != null && !enemy.detectedHero.IsDead)
             {
-                if (VisionSystem.Instance.IsTileInVision(enemy, enemy.detectedHero.currentPosition))
+                bool inSight = VisionSystem.Instance.IsTileInVision(enemy, enemy.detectedHero.currentPosition);
+                if (inSight)
                 {
-                    heroVisibleToAny = true;
-                    break;
+                    anySeesHero = true;
+                    detectedHero = enemy.detectedHero;
+
+                    // ✅ lưu lại vị trí hero đang thấy
+                    Vector2Int heroPos = detectedHero.currentPosition;
+                    if (!enemy.heroVisibleHistory.Contains(heroPos))
+                        enemy.heroVisibleHistory.Add(heroPos);
                 }
             }
         }
-        if (!anyChasing || !heroVisibleToAny)
+
+        if (anySeesHero && detectedHero != null)
         {
             foreach (var e in allEnemies)
             {
                 if (e == null || e.IsDead) continue;
-                e.SetState(EnemyState.Patrol);
+                e.SetState(EnemyState.Chase, detectedHero);
+            }
+        }
+        else
+        {
+            // Không ai thấy hero → chuyển LostTrack
+            foreach (var e in allEnemies)
+            {
+                if (e == null || e.IsDead) continue;
+                if (e.heroVisibleHistory.Count > 0)
+                    e.SetState(EnemyState.LostTrack);
+                else
+                    e.SetState(EnemyState.Patrol);
             }
         }
     }
+
+
+
     // ======================================== HELPERS ========================================
     private HeroUnit GetAttackableHero(EnemyUnit enemy)
     {
@@ -242,13 +387,13 @@ public class EnemySystem : Singleton<EnemySystem>
         }
         return false;
     }
-    
+
     public void UpdateEnemyStateUI()
     {
         if (enemyStateText == null) return;
 
         string stateSummary = "";
-        int patrolCount = 0,  chaseCount = 0;
+        int patrolCount = 0, chaseCount = 0, lostTrack = 0;
 
         foreach (var enemy in allEnemies)
         {
@@ -262,13 +407,80 @@ public class EnemySystem : Singleton<EnemySystem>
                 case EnemyState.Chase:
                     chaseCount++;
                     break;
+                case EnemyState.LostTrack:
+                    lostTrack++;
+                    break;
             }
         }
 
-        stateSummary = $" Patrol: {patrolCount}\n" +
+        stateSummary = $" Patrol: {patrolCount}\n" + $" LostTrack: {lostTrack}\n" +
                     $" Chase: {chaseCount}";
 
         enemyStateText.text = stateSummary;
     }
+
+    private void EvaluatePostMoveVision()
+{
+    HeroUnit heroToChase = null;
+
+    foreach (var enemy in allEnemies)
+    {
+        if (enemy == null || enemy.IsDead) continue;
+
+        foreach (var hero in HeroUnit.GetAllHeroes())
+        {
+            if (hero.IsDead) continue;
+
+            if (VisionSystem.Instance.IsTileInVision(enemy, hero.currentPosition))
+            {
+                heroToChase = hero;
+                break;
+            }
+        }
+
+        if (heroToChase != null) break;
+    }
+
+    if (heroToChase != null)
+    {
+        foreach (var enemy in allEnemies)
+        {
+            if (enemy == null || enemy.IsDead) continue;
+            enemy.SetState(EnemyState.Chase, heroToChase);
+        }
+        Debug.Log($"🔁 GLOBAL RE-CHASE: hero {heroToChase.name} được nhìn thấy → tất cả Chase");
+    }
+    else
+    {
+        foreach (var enemy in allEnemies)
+        {
+            if (enemy == null || enemy.IsDead) continue;
+            if (enemy.heroVisibleHistory.Count > 0)
+                enemy.SetState(EnemyState.LostTrack);
+            else
+                enemy.SetState(EnemyState.Patrol);
+        }
+        Debug.Log("🟢 GLOBAL RESET: không ai thấy hero → Patrol hoặc LostTrack");
+    }
+}
+
+
+    private void EvaluateVisionForEnemy(EnemyUnit enemy)
+{
+    foreach (var hero in HeroUnit.GetAllHeroes())
+    {
+        if (hero.IsDead) continue;
+
+        // Kiểm tra nếu hero trong tầm nhìn
+        if (VisionSystem.Instance.IsTileInVision(enemy, hero.currentPosition))
+        {
+            if (!enemy.heroVisibleHistory.Contains(hero.currentPosition))
+                enemy.heroVisibleHistory.Add(hero.currentPosition);
+
+            
+        }
+    }
+}
+
 
 }

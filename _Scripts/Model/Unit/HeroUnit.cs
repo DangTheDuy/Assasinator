@@ -28,6 +28,7 @@ public class HeroUnit : Unit
     public int CurrentHP => GetCurrentHealth();
 
     private GameObject arrowInstance;
+    public static System.Action<HeroUnit, Vector2Int> OnHeroMoved;
 
     // ================================= WATER SYSTEM ====================================
     [Header("Water & Drowning")]
@@ -56,6 +57,12 @@ public class HeroUnit : Unit
 
         OnHeroSpawned?.Invoke(this);
     }
+
+     public static List<HeroUnit> GetAllHeroes()
+    {
+        return new List<HeroUnit>(FindObjectsOfType<HeroUnit>());
+    }
+
 
     // ================================= SELECT / DESELECT ================================
     public override void OnSelect()
@@ -117,6 +124,11 @@ public class HeroUnit : Unit
         base.MoveTo(worldPos, gridPos);
         SpendAP(cost);
         VisionSystem.Instance.UpdateDiamondVision(gridPos, visionRange, prev, prevRange, this);
+        OnHeroMoved?.Invoke(this, gridPos);
+        foreach (var enemy in EnemySystem.Instance.GetAllEnemies())
+        {
+            enemy.EvaluateVisionForEnemy();
+        }
     }
 
     public override void OnEnterTile(Tile tile)

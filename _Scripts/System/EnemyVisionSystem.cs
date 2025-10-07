@@ -41,14 +41,14 @@ public class EnemyVisionDisplaySystem : MonoBehaviour
         {
             if (enemy == null || enemy.IsDead) continue;
 
-            int visionRange = Mathf.Max(1, enemy.visionRange); // ✅ dùng visionRange thật
+            int visionRange = Mathf.Max(1, enemy.visionRange); 
             Vector2Int pos = enemy.currentPosition;
 
             List<Vector2Int> cellsInRange = GridManager.Instance.GetCellsInDiamondRange(pos, visionRange);
             foreach (var cell in cellsInRange)
             {
                 Tile tile = GridManager.Instance.GetTileAtPosition(cell);
-                if (tile == null || !tile.IsVisible) continue; // chỉ hiện nếu hero nhìn thấy
+                if (tile == null || !tile.IsVisible) continue; 
 
                 // Nếu tile chưa có overlay thì tạo
                 if (!overlays.ContainsKey(tile))
