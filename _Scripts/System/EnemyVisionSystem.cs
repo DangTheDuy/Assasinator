@@ -41,7 +41,7 @@ public class EnemyVisionDisplaySystem : MonoBehaviour
         {
             if (enemy == null || enemy.IsDead) continue;
 
-            int visionRange = Mathf.Max(1, enemy.visionRange); 
+            int visionRange = Mathf.Max(0, enemy.visionRange); 
             Vector2Int pos = enemy.currentPosition;
 
             List<Vector2Int> cellsInRange = GridManager.Instance.GetCellsInDiamondRange(pos, visionRange);

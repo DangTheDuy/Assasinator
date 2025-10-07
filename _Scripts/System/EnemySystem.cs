@@ -31,6 +31,18 @@ public class EnemySystem : Singleton<EnemySystem>
             allEnemies.Add(enemy);
     }
 
+    public void UnregisterEnemy(EnemyUnit enemy)
+    {
+        if (enemy == null) return;
+
+        if (allEnemies.Contains(enemy))
+        {
+            allEnemies.Remove(enemy);
+        }
+        UpdateEnemyStateUI();
+    }
+
+
     public List<EnemyUnit> GetAllEnemies() => allEnemies;
 
     public bool IsAnyEnemyChasing()

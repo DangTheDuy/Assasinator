@@ -7,13 +7,15 @@ public enum EnemyState { Patrol, Chase, LostTrack }
 public class EnemyUnit : Unit
 {
     [Header("Config")]
-    public int visionRange = 1;
+    public int visionRange = 0;
     public EnemyState currentState = EnemyState.Patrol;
     public HeroUnit detectedHero;
     public int DetectionChance => data.detectionChance;
 
     [Header("Tracking")]
     public List<Vector2Int> heroVisibleHistory = new();
+    private bool IsTrackingState => currentState == EnemyState.Chase || currentState == EnemyState.LostTrack;
+
 
     [Header("UI / Marker")]
     private GameObject highlightOverlay;
@@ -44,7 +46,7 @@ public class EnemyUnit : Unit
         switch (newState)
         {
             case EnemyState.Chase:
-                if (currentState == EnemyState.Patrol) visionRange += 1;
+                if (currentState == EnemyState.Patrol) visionRange += 2;
                 if (currentState == EnemyState.LostTrack)
                 {
                     heroVisibleHistory.Clear();
@@ -58,7 +60,7 @@ public class EnemyUnit : Unit
             case EnemyState.Patrol:
                 heroVisibleHistory.Clear();
                 if (currentState != EnemyState.Patrol)
-                    visionRange = Mathf.Max(1, visionRange - 1);
+                    visionRange = Mathf.Max(0, visionRange - 1);
                 detectedHero = null;
                 break;
         }
@@ -114,6 +116,7 @@ public class EnemyUnit : Unit
 
     public void EvaluateVisionForEnemy()
     {
+        if (!IsTrackingState) return;
         foreach (var hero in HeroUnit.GetAllHeroes())
         {
             if (hero.IsDead) continue;
@@ -212,7 +215,7 @@ public class EnemyUnit : Unit
     {
         DropLoot();
         base.Die();
-        EnemySystem.Instance.CheckAlertEnd();
+        EnemySystem.Instance?.UnregisterEnemy(this);
     }
 
     private void DropLoot()
