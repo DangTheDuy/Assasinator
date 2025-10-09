@@ -98,20 +98,89 @@ public class EnemySystem : Singleton<EnemySystem>
 
     private IEnumerator ChaseMove(EnemyUnit enemy)
     {
-        if (enemy.detectedHero == null || enemy.detectedHero.IsDead)
+        // 1️⃣ Nếu không có hero để theo đuổi → tìm hero gần nhất có thể thấy
+        HeroUnit targetHero = null;
+
+        // Ưu tiên hero trong tầm nhìn
+        targetHero = FindNearestVisibleHero(enemy);
+
+        // Nếu không có hero nào thấy trực tiếp → giữ hero cũ (nếu còn) hoặc chọn hero gần nhất tổng thể
+        if (targetHero == null)
+        {
+            if (enemy.detectedHero != null && !enemy.detectedHero.IsDead)
+            {
+                targetHero = enemy.detectedHero;
+            }
+            else
+            {
+                targetHero = FindNearestHeroByDistance(enemy);
+            }
+        }
+
+        // Nếu vẫn không có hero → quay về tuần tra
+        if (targetHero == null)
         {
             enemy.SetState(EnemyState.Patrol);
             yield break;
         }
 
-        if (enemy.CanAttack(enemy.detectedHero))
+        // Cập nhật trạng thái nếu khác
+        if (enemy.detectedHero != targetHero)
+        {
+            enemy.SetState(EnemyState.Chase, targetHero);
+            Debug.Log($"🎯 {enemy.name} chọn mục tiêu mới: {targetHero.name}");
+        }
+
+        // 2️⃣ Nếu đang trong tầm tấn công → không cần di chuyển
+        if (enemy.CanAttack(targetHero))
             yield break;
 
-        Vector2Int nextStep = GridManager.Instance.GetStepTowards(enemy.currentPosition, enemy.detectedHero.currentPosition, 2);
-        MoveEnemy(enemy, nextStep);
-        yield return null;
+        // 3️⃣ Tìm đường di chuyển tới hero gần nhất
+        Vector2Int nextStep = GridManager.Instance.GetStepTowards(enemy.currentPosition, targetHero.currentPosition, 2);
+        Tile targetTile = GridManager.Instance.GetTileAtPosition(nextStep);
 
-        CheckAlertEnd();
+        // Nếu tile chính không khả dụng → tìm ô gần mục tiêu mà còn chỗ cho enemy
+        if (targetTile == null || !IsTileAvailableForEnemy(targetTile))
+        {
+            Vector2Int altTarget = GridManager.Instance.GetNearestAvailableTilePosition(targetHero.currentPosition, enemy.currentPosition, 6);
+            if (altTarget == Vector2Int.zero)
+            {
+                Debug.Log($"🚫 {enemy.name} không tìm được ô thay thế gần {targetHero.name}");
+                yield break;
+            }
+
+            // Tính bước đi hướng tới ô thay thế (vẫn dùng số bước phù hợp, ví dụ 2)
+            nextStep = GridManager.Instance.GetStepTowards(enemy.currentPosition, altTarget, 2);
+            targetTile = GridManager.Instance.GetTileAtPosition(nextStep);
+
+            if (targetTile == null || !IsTileAvailableForEnemy(targetTile))
+            {
+                // an toàn: nếu ô nextStep vẫn ko hợp lệ thì abort
+                Debug.Log($"⚠️ {enemy.name} bước kế tiếp {nextStep} vẫn không khả dụng.");
+                yield break;
+            }
+        }
+
+
+        // 5️⃣ Di chuyển
+        Vector3 worldPos = GridManager.Instance.GetWorldPosition(nextStep);
+        enemy.MoveTo(worldPos, nextStep);
+        enemy.OnEnterTile(targetTile);
+
+        // 6️⃣ Cập nhật dấu vết
+        enemy.heroVisibleHistory.AddIfNotContains(targetHero.currentPosition);
+
+        // 7️⃣ Sau khi di chuyển, kiểm tra lại tầm nhìn
+        if (VisionSystem.Instance.IsTileInVision(enemy, targetHero.currentPosition))
+        {
+            enemy.SetState(EnemyState.Chase, targetHero);
+        }
+        else
+        {
+            enemy.SetState(EnemyState.LostTrack, targetHero);
+        }
+
+        yield return null;
     }
 
     private IEnumerator LostTrackMove(EnemyUnit enemy)
@@ -148,6 +217,11 @@ public class EnemySystem : Singleton<EnemySystem>
         {
             if (enemy == null || enemy.IsDead) continue;
 
+            // ✅ chỉ attack nếu enemy thật sự đang chiếm một tile hợp lệ
+            Tile tile = GridManager.Instance.GetTileAtPosition(enemy.currentPosition);
+            if (tile == null || tile.IsObstacle || !tile.occupyingUnits.Contains(enemy))
+                continue;
+
             HeroUnit target = GetAttackableHero(enemy);
             if (target != null)
             {
@@ -156,6 +230,7 @@ public class EnemySystem : Singleton<EnemySystem>
             }
         }
     }
+
 
     private IEnumerator PerformAttackSafely(EnemyUnit enemy, HeroUnit hero)
     {
@@ -182,34 +257,55 @@ public class EnemySystem : Singleton<EnemySystem>
 
     public void CheckAlertEnd()
     {
-        HeroUnit detectedHero = null;
         bool anySeesHero = false;
+        HeroUnit lastSeenHero = null;
+        Vector2Int lastSeenPos = Vector2Int.zero;
 
         foreach (var enemy in allEnemies)
         {
-            if (enemy == null || enemy.IsDead || enemy.detectedHero == null) continue;
-
-            if (VisionSystem.Instance.IsTileInVision(enemy, enemy.detectedHero.currentPosition))
+            if (enemy == null || enemy.IsDead) continue;
+            HeroUnit visibleHero = FindNearestVisibleHero(enemy);
+            if (visibleHero != null)
             {
-                detectedHero = enemy.detectedHero;
                 anySeesHero = true;
+                lastSeenHero = visibleHero;
+                lastSeenPos = visibleHero.currentPosition;
 
-                if (!enemy.heroVisibleHistory.Contains(detectedHero.currentPosition))
-                    enemy.heroVisibleHistory.Add(detectedHero.currentPosition);
+                // Nếu enemy đang theo dõi hero khác → chuyển sang hero mới
+                if (enemy.detectedHero != visibleHero)
+                {
+                    enemy.SetState(EnemyState.Chase, visibleHero);
+                    Debug.Log($"👀 {enemy.name} chuyển mục tiêu sang {visibleHero.name}");
+                }
+                enemy.heroVisibleHistory.AddIfNotContains(visibleHero.currentPosition);
             }
         }
 
-        if (anySeesHero && detectedHero != null)
-        {
-            foreach (var e in allEnemies)
-                e?.SetState(EnemyState.Chase, detectedHero);
-        }
-        else
+        if (anySeesHero && lastSeenHero != null)
         {
             foreach (var e in allEnemies)
             {
                 if (e == null || e.IsDead) continue;
-                e.SetState(e.heroVisibleHistory.Count > 0 ? EnemyState.LostTrack : EnemyState.Patrol);
+                e.heroVisibleHistory.AddIfNotContains(lastSeenPos);
+                e.SetState(EnemyState.Chase, lastSeenHero);
+            }
+        }
+        else
+        {
+            // ❔ Không ai thấy hero nào → tất cả LostTrack
+            foreach (var e in allEnemies)
+            {
+                if (e == null || e.IsDead) continue;
+                if (e.heroVisibleHistory.Count > 0)
+                {
+                    Vector2Int furthest = GetFurthestHeroPosition(e);
+                    e.heroVisibleHistory.AddIfNotContains(furthest);
+                    e.SetState(EnemyState.LostTrack, e.detectedHero);
+                }
+                else
+                {
+                    e.SetState(EnemyState.Patrol);
+                }
             }
         }
     }
@@ -336,6 +432,47 @@ public class EnemySystem : Singleton<EnemySystem>
                 e.SetState(e.heroVisibleHistory.Count > 0 ? EnemyState.LostTrack : EnemyState.Patrol);
         }
     }
+    
+    private HeroUnit FindNearestVisibleHero(EnemyUnit enemy, HeroUnit exclude = null)
+    {
+        HeroUnit best = null;
+        float bestDist = float.MaxValue;
+
+        foreach (var hero in HeroUnit.GetAllHeroes())
+        {
+            if (hero == null || hero.IsDead || hero == exclude) continue;
+
+            if (VisionSystem.Instance.IsTileInVision(enemy, hero.currentPosition))
+            {
+                float dist = GridManager.Instance.GetDistance(enemy.currentPosition, hero.currentPosition);
+                if (dist < bestDist)
+                {
+                    best = hero;
+                    bestDist = dist;
+                }
+            }
+        }
+        return best;
+    }
+
+    private HeroUnit FindNearestHeroByDistance(EnemyUnit enemy)
+    {
+        HeroUnit best = null;
+        float bestDist = float.MaxValue;
+
+        foreach (var hero in HeroUnit.GetAllHeroes())
+        {
+            if (hero == null || hero.IsDead) continue;
+            float dist = GridManager.Instance.GetDistance(enemy.currentPosition, hero.currentPosition);
+            if (dist < bestDist)
+            {
+                best = hero;
+                bestDist = dist;
+            }
+        }
+        return best;
+    }
+
 }
 
 // ============================ EXTENSION ============================
@@ -346,3 +483,5 @@ public class EnemySystem : Singleton<EnemySystem>
             if (!list.Contains(item)) list.Add(item);
         }
     }
+
+    

@@ -28,21 +28,18 @@ public class GridManager : MonoBehaviour
     private void Awake()
     {
         Instance = this;
-        LoadMapFromJson("map");
     }
 
-    public void LoadMapFromJson(string fileName)
+    public void LoadMapFromData(MapData mapData)
     {
         tiles.Clear();
 
-        TextAsset jsonFile = Resources.Load<TextAsset>($"MapData/{fileName}");
-        if (jsonFile == null)
+        if (mapData == null || mapData.tiles == null)
         {
-            Debug.LogError($"❌ Không tìm thấy file: Resources/MapData/{fileName}.json");
+            Debug.LogError("❌ MapData không hợp lệ!");
             return;
         }
 
-        TileDataList mapData = JsonUtility.FromJson<TileDataList>(jsonFile.text);
         enemyUnitsToSpawn = mapData.enemyUnitsToSpawn;
         maxEnemySpawnTiles = mapData.maxEnemySpawnTiles;
 
@@ -217,5 +214,53 @@ public class GridManager : MonoBehaviour
         }
         return result;
     }
+    // Kiểm tra 1 ô có chỗ cho enemy (số enemy tối đa giữ nguyên logic hiện tại: 4)
+    public bool IsCellAvailableForEnemy(Vector2Int pos)
+    {
+        if (!tiles.TryGetValue(pos, out var tile)) return false;
+        if (tile.IsObstacle) return false;
+        int enemyCount = tile.occupyingUnits.FindAll(u => u is EnemyUnit).Count;
+        return enemyCount < 4; // nếu bạn muốn dùng tile.tileData.maxEnemyPerTile thì thay 4 bằng đó
+    }
+
+    // Tìm ô gần "center" có chỗ cho enemy, ưu tiên ô gần "fromPosition" (enemy hiện tại).
+    // Nếu không tìm thấy trả về Vector2Int.zero (nếu map có ô (0,0) bạn có thể đổi thành nullable)
+    public Vector2Int GetNearestAvailableTilePosition(Vector2Int center, Vector2Int fromPosition, int maxRadius = 6)
+    {
+        List<Vector2Int> candidates = new List<Vector2Int>();
+
+        // Tìm theo vòng tầng (radius) từ 0..maxRadius, dừng khi tìm thấy candidate
+        for (int r = 0; r <= maxRadius; r++)
+        {
+            for (int dx = -r; dx <= r; dx++)
+            {
+                int dy = r - Mathf.Abs(dx);
+                // 2 vị trí trên vòng diamond ứng với dy và -dy (không duplicate when dy==0)
+                Vector2Int a = new Vector2Int(center.x + dx, center.y + dy);
+                Vector2Int b = new Vector2Int(center.x + dx, center.y - dy);
+
+                if (tiles.ContainsKey(a) && IsCellAvailableForEnemy(a)) candidates.Add(a);
+                if (dy != 0 && tiles.ContainsKey(b) && IsCellAvailableForEnemy(b)) candidates.Add(b);
+            }
+            if (candidates.Count > 0) break;
+        }
+
+        if (candidates.Count == 0) return Vector2Int.zero;
+
+        // Chọn candidate gần nhất tới fromPosition (tức ưu tiên ô dễ tới cho enemy)
+        Vector2Int best = candidates[0];
+        int bestDist = GetDistance(fromPosition, best);
+        foreach (var c in candidates)
+        {
+            int d = GetDistance(fromPosition, c);
+            if (d < bestDist)
+            {
+                bestDist = d;
+                best = c;
+            }
+        }
+        return best;
+    }
+
 
 }

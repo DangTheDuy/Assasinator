@@ -60,7 +60,7 @@ public class EnemyUnit : Unit
             case EnemyState.Patrol:
                 heroVisibleHistory.Clear();
                 if (currentState != EnemyState.Patrol)
-                    visionRange = Mathf.Max(0, visionRange - 1);
+                    visionRange = Mathf.Max(0, visionRange - 2);
                 detectedHero = null;
                 break;
         }

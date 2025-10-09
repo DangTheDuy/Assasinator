@@ -1,5 +1,7 @@
+// File: UnitSpawner.cs
 using System.Collections.Generic;
 using UnityEngine;
+using System.Linq;
 
 public class UnitSpawner : MonoBehaviour
 {
@@ -7,59 +9,85 @@ public class UnitSpawner : MonoBehaviour
     [SerializeField] private Transform heroContainer;
     [SerializeField] private Transform enemyContainer;
 
-    private int totalEnemiesSpawned = 0;
-
-    public void Start()
+    // Phương thức công khai được GameManager gọi cùng với LevelData
+    public void SpawnAllUnits(LevelData levelData)
     {
-        SpawnAllUnitsCustom();
+        if (levelData == null)
+        {
+            Debug.LogError("LevelData rỗng. Không thể sinh đơn vị.");
+            return;
+        }
+
+        SpawnHeroes(levelData.heroSpawnPositions);
+        SpawnEnemies(levelData.enemySpawnPositions);
     }
 
-    public void SpawnAllUnitsCustom()
+    private void SpawnHeroes(List<Vector2Int> spawnPositions)
     {
         List<UnitData> playerUnitDataList = unitManager.GetPlayerUnitData();
-        List<UnitData> enemyUnitDataList = unitManager.GetEnemyUnitData();
-
         GameObject heroBasePrefab = unitManager.GetHeroBasePrefab();
-        GameObject enemyBasePrefab = unitManager.GetEnemyBasePrefab();
 
-        // SPAWN HERO
-        Vector2Int heroSpawnCell = new Vector2Int(1, 1);
-        Tile heroTile = GridManager.Instance.GetTileAtPosition(heroSpawnCell);
-
-        for (int i = 0; i < Mathf.Min(playerUnitDataList.Count, 2); i++)
+        if (spawnPositions.Count == 0 || playerUnitDataList.Count == 0)
         {
-            UnitData unitData = playerUnitDataList[i];
-            GameObject unitObject = Instantiate(heroBasePrefab, Vector3.zero, Quaternion.identity, heroContainer);
-            HeroUnit hero = unitObject.GetComponent<HeroUnit>();
-            if (hero != null)
+            Debug.LogWarning("Không tìm thấy vị trí sinh hero hoặc dữ liệu hero. Bỏ qua việc sinh hero.");
+            return;
+        }
+
+        for (int i = 0; i < spawnPositions.Count && i < playerUnitDataList.Count; i++)
+        {
+            Vector2Int spawnPos = spawnPositions[i];
+            Tile spawnTile = GridManager.Instance.GetTileAtPosition(spawnPos);
+            
+            if (spawnTile != null && !spawnTile.IsObstacle)
             {
-                heroTile.PlaceUnit(hero);
-                hero.Setup(unitData);
+                UnitData unitData = playerUnitDataList[i];
+                GameObject unitObject = Instantiate(heroBasePrefab, Vector3.zero, Quaternion.identity, heroContainer);
+                HeroUnit hero = unitObject.GetComponent<HeroUnit>();
+                
+                if (hero != null)
+                {
+                    hero.Setup(unitData);
+                    // Đặt đơn vị lên ô gạch
+                    spawnTile.PlaceUnit(hero);
+                    Debug.Log($"Đã sinh Hero: {hero.name} tại {spawnPos}");
+                }
+            }
+            else
+            {
+                Debug.LogWarning($"Không thể sinh hero tại {spawnPos}. Ô gạch không hợp lệ hoặc là chướng ngại vật.");
             }
         }
-
-        // SPAWN ENEMY
-        int enemyUnitsToSpawn = GridManager.Instance.enemyUnitsToSpawn;
-        int maxSpawnTiles = GridManager.Instance.maxEnemySpawnTiles;
-
-        List<Vector2Int> allSpawnCells = GridManager.Instance.GetEnemySpawnCells();
-        allSpawnCells.Remove(heroSpawnCell);
-
-        int usableTiles = Mathf.Min(maxSpawnTiles, allSpawnCells.Count);
-        List<Vector2Int> selectedTiles = new List<Vector2Int>();
-
-        while (selectedTiles.Count < usableTiles)
+        
+        // Di chuyển camera đến vị trí của hero đầu tiên nếu có
+        if (spawnPositions.Count > 0)
         {
-            Vector2Int cell = allSpawnCells[Random.Range(0, allSpawnCells.Count)];
-            allSpawnCells.Remove(cell);
-            selectedTiles.Add(cell);
+            FocusCameraOnUnit(spawnPositions[0]);
+        }
+    }
+
+    private void SpawnEnemies(List<Vector2Int> spawnPositions)
+    {
+        
+        List<UnitData> enemyUnitDataList = unitManager.GetEnemyUnitData();
+        GameObject enemyBasePrefab = unitManager.GetEnemyBasePrefab();
+        
+        if (enemyUnitDataList.Count == 0 || spawnPositions.Count == 0)
+        {
+            Debug.LogWarning("Không tìm thấy dữ liệu hoặc vị trí sinh enemy. Bỏ qua việc sinh enemy.");
+            return;
         }
 
+        // Trộn ngẫu nhiên các vị trí sinh để enemy xuất hiện ngẫu nhiên
+        List<Vector2Int> shuffledSpawnPos = spawnPositions.OrderBy(x => Random.value).ToList();
+        
         int enemyIndex = 0;
-        totalEnemiesSpawned = 0;
+        int maxEnemies = GridManager.Instance.enemyUnitsToSpawn;
+        Debug.Log($"Số enemy tối đa cần sinh: {maxEnemies}");
 
-        foreach (Vector2Int cell in selectedTiles)
+        foreach (Vector2Int cell in shuffledSpawnPos)
         {
+            if (enemyIndex >= maxEnemies) break;
+
             Tile tile = GridManager.Instance.GetTileAtPosition(cell);
             if (tile == null || tile.IsObstacle || tile.tileData == null) continue;
 
@@ -69,28 +97,27 @@ public class UnitSpawner : MonoBehaviour
 
             int groupSize = Mathf.Min(maxPerTile, availableSpace);
 
-            for (int i = 0; i < groupSize && enemyIndex < enemyUnitsToSpawn; i++)
+            for (int i = 0; i < groupSize && enemyIndex < maxEnemies; i++)
             {
                 UnitData unitData = enemyUnitDataList[enemyIndex % enemyUnitDataList.Count];
                 GameObject unitObject = Instantiate(enemyBasePrefab, Vector3.zero, Quaternion.identity, enemyContainer);
                 EnemyUnit enemy = unitObject.GetComponent<EnemyUnit>();
+
                 if (enemy != null)
                 {
                     enemy.Setup(unitData);
+                    // Đặt đơn vị lên ô gạch
                     tile.PlaceUnit(enemy);
-                    tile.UpdateUnitVisibility();
-                    totalEnemiesSpawned++;
+                    Debug.Log($"Đã sinh Enemy: {enemy.name} tại {cell}");
                 }
                 enemyIndex++;
             }
         }
-        FocusCameraOnHero(heroSpawnCell);
     }
 
-    public void FocusCameraOnHero(Vector2Int heroCell)
+    private void FocusCameraOnUnit(Vector2Int unitCell)
     {
-        Vector3 heroWorldPos = GridManager.Instance.GetWorldPosition(heroCell);
-        Camera.main.transform.position = new Vector3(heroWorldPos.x, heroWorldPos.y, -10f);
+        Vector3 unitWorldPos = GridManager.Instance.GetWorldPosition(unitCell);
+        Camera.main.transform.position = new Vector3(unitWorldPos.x, unitWorldPos.y, -10f);
     }
-
 }

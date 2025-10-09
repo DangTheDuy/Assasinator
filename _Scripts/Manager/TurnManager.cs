@@ -12,7 +12,12 @@ public class TurnManager : Singleton<TurnManager>
     public static event Action<TurnPhase> OnTurnEnd;
     public static event Action<int> OnNewTurnStarted;
 
-
+    public void StartGame()
+    {
+        Debug.Log("Game started. Hero turn begins.");
+        OnTurnStart?.Invoke(TurnPhase.Hero);
+    }
+    
     public void EndHeroTurn()
     {
         if (CurrentPhase != TurnPhase.Hero) return;
