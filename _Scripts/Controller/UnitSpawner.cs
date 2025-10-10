@@ -17,7 +17,6 @@ public class UnitSpawner : MonoBehaviour
             Debug.LogError("LevelData rỗng. Không thể sinh đơn vị.");
             return;
         }
-
         SpawnHeroes(levelData.heroSpawnPositions);
         SpawnEnemies(levelData.enemySpawnPositions);
     }
@@ -47,9 +46,7 @@ public class UnitSpawner : MonoBehaviour
                 if (hero != null)
                 {
                     hero.Setup(unitData);
-                    // Đặt đơn vị lên ô gạch
                     spawnTile.PlaceUnit(hero);
-                    Debug.Log($"Đã sinh Hero: {hero.name} tại {spawnPos}");
                 }
             }
             else
@@ -76,13 +73,10 @@ public class UnitSpawner : MonoBehaviour
             Debug.LogWarning("Không tìm thấy dữ liệu hoặc vị trí sinh enemy. Bỏ qua việc sinh enemy.");
             return;
         }
-
-        // Trộn ngẫu nhiên các vị trí sinh để enemy xuất hiện ngẫu nhiên
         List<Vector2Int> shuffledSpawnPos = spawnPositions.OrderBy(x => Random.value).ToList();
         
         int enemyIndex = 0;
         int maxEnemies = GridManager.Instance.enemyUnitsToSpawn;
-        Debug.Log($"Số enemy tối đa cần sinh: {maxEnemies}");
 
         foreach (Vector2Int cell in shuffledSpawnPos)
         {
@@ -106,9 +100,8 @@ public class UnitSpawner : MonoBehaviour
                 if (enemy != null)
                 {
                     enemy.Setup(unitData);
-                    // Đặt đơn vị lên ô gạch
                     tile.PlaceUnit(enemy);
-                    Debug.Log($"Đã sinh Enemy: {enemy.name} tại {cell}");
+                    enemy.SetVisibility(tile != null && tile.visibleCount > 0);
                 }
                 enemyIndex++;
             }

@@ -182,7 +182,7 @@ public class Unit : MonoBehaviour
         if (IsDead) return;
         IsDead = true;
 
-        ActionSystem.Instance.Perform(new UnitDiedGA(this));
+        ActionSystem.Instance.AddReaction(new UnitDiedGA(this));
 
         Tile tile = GridManager.Instance.GetTileAtPosition(currentPosition);
         if (tile != null)

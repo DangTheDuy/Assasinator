@@ -14,6 +14,7 @@ public class EliminateEnemiesQuest : Quest
         targetName = name;
         questName = string.IsNullOrEmpty(targetName) ? $"Tiêu diệt {targetCount} kẻ địch" : $"Tiêu diệt '{targetName}'";
         description = string.IsNullOrEmpty(targetName) ? $"Hãy tiêu diệt {targetCount} kẻ địch trên bản đồ." : $"Hãy tìm và tiêu diệt mục tiêu chính: {targetName}.";
+        Debug.Log($"[Setup] EliminateEnemiesQuest: targetCount = {targetCount}, targetName = {targetName}");
     }
 
     public override void SubscribeToEvents()

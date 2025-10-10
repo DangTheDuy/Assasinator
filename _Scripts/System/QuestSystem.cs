@@ -40,6 +40,7 @@ public class QuestSystem : Singleton<QuestSystem>
                 // Tạo một instance mới của ScriptableObject để tránh ảnh hưởng đến asset gốc
                 var elimQuest = ScriptableObject.CreateInstance<EliminateEnemiesQuest>();
                 elimQuest.Setup(data.targetEnemyCount, data.targetEnemyName);
+                Debug.Log($"[QuestSystem] Tạo nhiệm vụ EliminateEnemies với count = {data.targetEnemyCount}, name = {data.targetEnemyName}");
                 return elimQuest;
             case QuestType.MoveToLocation:
                 var moveQuest = ScriptableObject.CreateInstance<MoveToLocationQuest>();

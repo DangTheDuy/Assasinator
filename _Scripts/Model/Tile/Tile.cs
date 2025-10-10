@@ -2,6 +2,14 @@ using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 
+public enum TileMarkType
+{
+    None,
+    PlayerSpawn,
+    EnemySpawn,
+    Objective,
+}
+
 public class Tile : MonoBehaviour
 {
     // ================== DATA & STATE ==================
@@ -9,6 +17,7 @@ public class Tile : MonoBehaviour
     public Vector2Int gridPosition;
     public List<Unit> occupyingUnits = new List<Unit>();
     public List<LootItem> lootItems = new List<LootItem>();
+    public TileMarkType markType = TileMarkType.None;
 
     public int MaxUnitsPerTile => 8;
     public virtual bool IsObstacle { get; protected set; } = false;

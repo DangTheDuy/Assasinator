@@ -91,21 +91,30 @@ public class MapEditor : EditorWindow
         }
     }
 
-    private void SaveToLevelData()
+   private void SaveToLevelData()
     {
-        // Gán dữ liệu map từ Editor vào đối tượng LevelData
         if (targetLevelData.mapData == null)
             targetLevelData.mapData = new MapData();
 
+        // Gán dữ liệu tile
         targetLevelData.mapData.tiles = new List<TileData>(tileMap.Values);
         targetLevelData.mapData.enemyUnitsToSpawn = enemyUnitsToSpawn;
         targetLevelData.mapData.maxEnemySpawnTiles = maxEnemySpawnTiles;
         targetLevelData.mapData.maxEnemyPerTile = maxEnemyPerTile;
 
-        // Đánh dấu đối tượng LevelData là đã bị thay đổi để Unity lưu lại
+        // ✅ Tự động cập nhật danh sách enemy spawn positions
+        targetLevelData.enemySpawnPositions.Clear();
+        foreach (var tile in tileMap.Values)
+        {
+            if (tile.isEnemySpawnZone)
+            {
+                targetLevelData.enemySpawnPositions.Add(new Vector2Int(tile.x, tile.y));
+            }
+        }
+
         EditorUtility.SetDirty(targetLevelData);
         AssetDatabase.SaveAssets();
-        Debug.Log($"✅ Map saved to {targetLevelData.name}.");
+        Debug.Log($"✅ Map saved to {targetLevelData.name}. Enemy spawn positions: {targetLevelData.enemySpawnPositions.Count}");
     }
 
     private void LoadFromLevelData()
@@ -131,8 +140,9 @@ public class MapEditor : EditorWindow
         // Cập nhật các trường Editor với giá trị từ LevelData
         enemyUnitsToSpawn = targetLevelData.mapData.enemyUnitsToSpawn; // Dòng này đã được sửa
         maxEnemySpawnTiles = targetLevelData.mapData.maxEnemySpawnTiles; // Dòng này đã được sửa
-        maxEnemyPerTile = targetLevelData.mapData.maxEnemyPerTile ;
+        maxEnemyPerTile = targetLevelData.mapData.maxEnemyPerTile;
 
         Debug.Log($"✅ Map loaded from {targetLevelData.name}.");
     }
+
 }

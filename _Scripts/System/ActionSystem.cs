@@ -47,15 +47,17 @@ public class ActionSystem : Singleton<ActionSystem>
         OnFlowFinished?.Invoke();
     }
 
-    private void PerformSubscribers(GameAction action, Dictionary<Type , List<Action<GameAction>>> subs)
+    private void PerformSubscribers(GameAction action, Dictionary<Type, List<Action<GameAction>>> subs)
     {
         Type type = action.GetType();
         if (subs.ContainsKey(type))
         {
-            foreach (var sub in subs[type])
+            // Tạo một bản sao để duyệt qua
+            var subscribersToPerform = new List<Action<GameAction>>(subs[type]);
+            foreach (var sub in subscribersToPerform)
             {
                 sub(action);
-            } 
+            }
         }
     }
     private IEnumerator PerformPerformer(GameAction action)

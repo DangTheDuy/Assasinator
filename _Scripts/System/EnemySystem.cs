@@ -473,6 +473,16 @@ public class EnemySystem : Singleton<EnemySystem>
         return best;
     }
 
+    public void UpdateEnemyVisibility()
+    {
+        foreach (var enemy in allEnemies)
+        {
+            if (enemy == null || enemy.IsDead) continue;
+            Tile tile = GridManager.Instance.GetTileAtPosition(enemy.currentPosition);
+            enemy.SetVisibility(tile != null && tile.visibleCount > 0);
+        }
+    }
+
 }
 
 // ============================ EXTENSION ============================
