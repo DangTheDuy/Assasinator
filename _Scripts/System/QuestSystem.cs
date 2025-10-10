@@ -8,17 +8,13 @@ public class QuestSystem : Singleton<QuestSystem>
     private List<QuestData> allQuests;
     private int currentQuestIndex = -1;
 
-    [Header("Quest Settings")]
-    [Tooltip("Nếu đúng, nhiệm vụ sẽ được thực hiện nối tiếp. Nếu sai, tất cả sẽ chạy song song.")]
-    public bool isSequential = true;
-
     public void InitializeQuests(LevelData levelData)
     {
         ClearCurrentQuests();
         allQuests = levelData.quests;
         currentQuestIndex = -1;
 
-        if (isSequential)
+        if (levelData.isSequential)
         {
             LoadNextQuest();
         }
@@ -40,7 +36,7 @@ public class QuestSystem : Singleton<QuestSystem>
                 activeQuests.Add(newQuest);
                 newQuest.StartQuest();
                 newQuest.OnQuestCompleted += HandleSequentialQuestCompleted;
-                Debug.Log($"[QuestSystem] Bắt đầu nhiệm vụ mới: {newQuest.questName}");
+                Debug.Log($"[QuestSystem]nhiệm vụ mới: {newQuest.questName}");
             }
         }
         else

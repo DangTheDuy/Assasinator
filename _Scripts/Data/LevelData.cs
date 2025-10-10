@@ -15,7 +15,8 @@ public class LevelData : ScriptableObject
 
     [Header("Enemies")]
     public List<Vector2Int> enemySpawnPositions = new List<Vector2Int>();
-    
+
     [Header("Quests")]
+    public bool isSequential = true;
     public List<QuestData> quests;
 }
