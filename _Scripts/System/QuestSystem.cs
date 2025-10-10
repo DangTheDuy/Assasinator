@@ -1,3 +1,4 @@
+// File: QuestSystem.cs
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -7,14 +8,19 @@ public class QuestSystem : Singleton<QuestSystem>
     private readonly List<Quest> activeQuests = new();
     private List<QuestData> allQuests;
     private int currentQuestIndex = -1;
+    private bool isSequential;
+
+    public static event Action<Quest> OnQuestLoaded;
+    public static event Action<Quest> OnQuestCompleted;
 
     public void InitializeQuests(LevelData levelData)
     {
         ClearCurrentQuests();
         allQuests = levelData.quests;
         currentQuestIndex = -1;
+        isSequential = levelData.isSequential;
 
-        if (levelData.isSequential)
+        if (isSequential)
         {
             LoadNextQuest();
         }
@@ -34,15 +40,12 @@ public class QuestSystem : Singleton<QuestSystem>
             if (newQuest != null)
             {
                 activeQuests.Add(newQuest);
+                // Gán phương thức callback chung
+                newQuest.OnCompletedCallback = HandleQuestCompleted; 
                 newQuest.StartQuest();
-                newQuest.OnQuestCompleted += HandleSequentialQuestCompleted;
-                Debug.Log($"[QuestSystem]nhiệm vụ mới: {newQuest.questName}");
+                OnQuestLoaded?.Invoke(newQuest);
+                Debug.Log($"[QuestSystem] Bắt đầu nhiệm vụ mới: {newQuest.questName}");
             }
-        }
-        else
-        {
-            Debug.Log("[QuestSystem] Tất cả nhiệm vụ đã hoàn thành!");
-            // Kích hoạt logic kết thúc level hoặc màn hình chiến thắng ở đây
         }
     }
 
@@ -54,47 +57,40 @@ public class QuestSystem : Singleton<QuestSystem>
             if (newQuest != null)
             {
                 activeQuests.Add(newQuest);
+                // Gán phương thức callback chung
+                newQuest.OnCompletedCallback = HandleQuestCompleted; 
                 newQuest.StartQuest();
-                newQuest.OnQuestCompleted += HandleParallelQuestCompleted;
+                OnQuestLoaded?.Invoke(newQuest);
                 Debug.Log($"[QuestSystem] Bắt đầu nhiệm vụ song song: {newQuest.questName}");
             }
         }
     }
 
-    private void HandleSequentialQuestCompleted()
+    private void HandleQuestCompleted(Quest completedQuest)
     {
-        // Gỡ bỏ nhiệm vụ vừa hoàn thành
-        activeQuests[0].OnQuestCompleted -= HandleSequentialQuestCompleted;
-        Destroy(activeQuests[0]);
-        activeQuests.RemoveAt(0);
-        
-        Debug.Log("[QuestSystem] Hoàn thành nhiệm vụ hiện tại, chuyển sang nhiệm vụ tiếp theo...");
-        LoadNextQuest();
-    }
+        // Phát ra sự kiện hoàn thành để UIManager lắng nghe
+        OnQuestCompleted?.Invoke(completedQuest);
 
-    private void HandleParallelQuestCompleted()
-    {
-        // Kiểm tra xem tất cả nhiệm vụ song song đã hoàn thành chưa
-        int completedCount = 0;
-        for (int i = activeQuests.Count - 1; i >= 0; i--)
+        if (isSequential)
         {
-            if (activeQuests[i].state == QuestState.Completed)
+            // Xử lý logic cho nhiệm vụ nối tiếp
+            if (activeQuests.Count > 0 && activeQuests[0] == completedQuest)
             {
-                activeQuests[i].OnQuestCompleted -= HandleParallelQuestCompleted;
-                Destroy(activeQuests[i]);
-                activeQuests.RemoveAt(i);
-                completedCount++;
+                activeQuests.RemoveAt(0);
+                Destroy(completedQuest);
+                LoadNextQuest();
             }
-        }
-        
-        if (activeQuests.Count == 0)
-        {
-            Debug.Log("[QuestSystem] Tất cả nhiệm vụ song song đã hoàn thành!");
-            // Kích hoạt logic kết thúc level hoặc màn hình chiến thắng ở đây
         }
         else
         {
-            Debug.Log($"[QuestSystem] Hoàn thành {completedCount} nhiệm vụ. Còn lại: {activeQuests.Count}");
+            // Xử lý logic cho nhiệm vụ song song
+            activeQuests.Remove(completedQuest);
+            Destroy(completedQuest);
+            
+            if (activeQuests.Count == 0)
+            {
+                Debug.Log("[QuestSystem] Tất cả nhiệm vụ song song đã hoàn thành!");
+            }
         }
     }
     

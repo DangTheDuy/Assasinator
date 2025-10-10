@@ -2,7 +2,6 @@
 using System;
 using UnityEngine;
 
-// Định nghĩa trạng thái của nhiệm vụ
 public enum QuestState
 {
     NotStarted,
@@ -20,8 +19,9 @@ public abstract class Quest : ScriptableObject
 
     public QuestState state { get; protected set; } = QuestState.NotStarted;
 
-    public event Action OnQuestCompleted;
-    public event Action OnQuestFailed;
+    // Sử dụng delegate để thông báo hoàn thành nhiệm vụ
+    public Action<Quest> OnCompletedCallback { get; set; }
+    public Action<Quest> OnQuestProgressUpdated; 
     
     // Khởi tạo nhiệm vụ
     public virtual void StartQuest()
@@ -31,16 +31,13 @@ public abstract class Quest : ScriptableObject
         Debug.Log($"Nhiệm vụ '{questName}' đã bắt đầu!");
     }
 
-    // Kiểm tra tiến độ và điều kiện hoàn thành
-    public abstract void OnUpdate();
-
     // Hoàn thành nhiệm vụ
     protected void CompleteQuest()
     {
         if (state != QuestState.InProgress) return;
         state = QuestState.Completed;
         UnsubscribeFromEvents();
-        OnQuestCompleted?.Invoke();
+        OnCompletedCallback?.Invoke(this);
         Debug.Log($"Nhiệm vụ '{questName}' đã hoàn thành!");
     }
 
@@ -50,13 +47,12 @@ public abstract class Quest : ScriptableObject
         if (state != QuestState.InProgress) return;
         state = QuestState.Failed;
         UnsubscribeFromEvents();
-        OnQuestFailed?.Invoke();
+        // Cần thêm một delegate riêng cho sự kiện thất bại nếu bạn muốn
         Debug.Log($"Nhiệm vụ '{questName}' đã thất bại!");
     }
 
-    // Đăng ký các sự kiện cần theo dõi
+    // Các phương thức trừu tượng để đăng ký và hủy đăng ký sự kiện
     public abstract void SubscribeToEvents();
-
-    // Hủy đăng ký khi nhiệm vụ kết thúc
     public abstract void UnsubscribeFromEvents();
+    public abstract void OnUpdate();
 }
