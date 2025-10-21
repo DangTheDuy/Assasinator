@@ -1,3 +1,4 @@
+// File: EnemyUnit.cs
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
@@ -21,7 +22,8 @@ public class EnemyUnit : Unit
     private GameObject highlightOverlay;
     private GameObject arrowInstance;
 
-    private readonly HashSet<HeroUnit> alreadyAttacked = new();
+    // GIỮ lại alreadyAttacked nếu logic Attack Phase có dùng để tránh tấn công lặp
+    private readonly HashSet<HeroUnit> alreadyAttacked = new(); 
     private Canvas canvas;
     private Collider2D col;
 
@@ -36,6 +38,12 @@ public class EnemyUnit : Unit
     {
         canvas = GetComponentInChildren<Canvas>(true);
         col = GetComponent<Collider2D>();
+    }
+
+    // THÊM HÀM NÀY: Dùng để reset trạng thái Enemy vào đầu mỗi lượt Enemy
+    public void ResetTurnState()
+    {
+        alreadyAttacked.Clear();
     }
 
     // ============================ STATE MACHINE ============================
@@ -80,17 +88,26 @@ public class EnemyUnit : Unit
 
         foreach (var unit in tile.occupyingUnits)
         {
-            if (unit is HeroUnit hero && !hero.IsDead && !alreadyAttacked.Contains(hero))
-                OnHeroDetected(hero);
+            if (unit is HeroUnit hero && !hero.IsDead )
+            {
+                if (hero.IsDetected)
+                {
+                    if (!alreadyAttacked.Contains(hero))
+                    {
+                        OnHeroDetected(hero);
+                    }
+                }
+            }
         }
     }
 
+    // GIỮ LẠI hàm này cho logic cũ (ví dụ: nếu có logic khác gọi)
     private void OnHeroDetected(HeroUnit hero)
     {
         alreadyAttacked.Add(hero);
         hero.IsDetected = true;
         HeroAlertUI.Instance?.SetDetected(true);
-        TryAttackHero(hero);
+        // BỎ QUA TryAttackHero(hero) để Attack Phase của Enemy Turn xử lý
     }
 
     // ============================ COMBAT ============================
@@ -135,8 +152,11 @@ public class EnemyUnit : Unit
     private void OnHeroMovedHandler(HeroUnit hero, Vector2Int pos)
     {
         if (IsDead || hero == null || hero.IsDead) return;
-        if (VisionSystem.Instance.IsTileInVision(this, pos))
-            heroVisibleHistory.AddIfNotContains(pos);
+        if (IsTrackingState || hero.IsDetected)
+        {
+            if (VisionSystem.Instance.IsTileInVision(this, pos))
+                heroVisibleHistory.AddIfNotContains(pos);
+        }
     }
 
     // ============================ UI INTERACTION ============================

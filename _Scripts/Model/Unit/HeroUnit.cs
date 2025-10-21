@@ -138,7 +138,7 @@ public class HeroUnit : Unit
 
         if (!EnemySystem.Instance.IsAnyEnemyChasing())
         {
-            VisionSystem.Instance.CheckHeroInEnemyVision(this);
+          //  VisionSystem.Instance.CheckHeroInEnemyVision(this);
             tile.CheckDetection();
         }
 

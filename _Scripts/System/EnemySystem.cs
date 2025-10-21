@@ -1,3 +1,4 @@
+// File: EnemySystem.cs
 using System.Collections;
 using System.Collections.Generic;
 using TMPro;
@@ -56,6 +57,9 @@ public class EnemySystem : Singleton<EnemySystem>
     // ============================ TURN LOGIC ============================
     public IEnumerator PerformEnemyTurn()
     {
+        // THÊM: Reset trạng thái Enemy
+        ResetEnemyTurnState();
+
         UpdateVisionForAllEnemies();
         RefreshEnemies();
         CheckAlertEnd();
@@ -88,10 +92,73 @@ public class EnemySystem : Singleton<EnemySystem>
         TurnManager.Instance.EndEnemyTurn();
     }
 
+    // THÊM: Hàm Reset trạng thái Enemy
+    private void ResetEnemyTurnState()
+    {
+        foreach (var enemy in allEnemies)
+        {
+            if (enemy != null)
+            {
+                enemy.ResetTurnState();
+            }
+        }
+    }
+
     // ============================ MOVEMENT ============================
     private IEnumerator PatrolMove(EnemyUnit enemy)
     {
-        MoveEnemy(enemy, HeroSystem.Instance.GetCurrentIntentDirection(), 1);
+        Vector2Int intentDirection = HeroSystem.Instance.GetCurrentIntentDirection();
+        Vector2Int nextPos = enemy.currentPosition + intentDirection;
+        bool movedSuccessfully = false;
+
+        // B1: Thử di chuyển theo hướng Intent
+        if (MoveEnemy(enemy, nextPos))
+        {
+            movedSuccessfully = true;
+        }
+        else // B2: Nếu thất bại -> Thử tìm một ô thay thế
+        {
+            Vector2Int bestMovePos = Vector2Int.zero;
+            float bestScore = -1f;
+
+            // Thử 4 hướng cơ bản (lên, xuống, trái, phải)
+            Vector2Int[] dirs = { Vector2Int.up, Vector2Int.down, Vector2Int.left, Vector2Int.right };
+            
+            // Tìm ô thay thế
+            foreach (var dir in dirs)
+            {
+                Vector2Int altPos = enemy.currentPosition + dir;
+                Tile altTile = GridManager.Instance.GetTileAtPosition(altPos);
+
+                if (altTile != null && IsTileAvailableForEnemy(altTile))
+                {
+                    // Đảm bảo không ưu tiên vị trí hiện tại (currentPosition)
+                    if (altPos == enemy.currentPosition) continue; 
+                    
+                    // Tính điểm: ưu tiên hướng Intent (2 điểm) hơn các hướng khác (1 điểm)
+                    float score = (dir == intentDirection) ? 2f : 1f;
+                    if (score > bestScore)
+                    {
+                        bestMovePos = altPos;
+                        bestScore = score;
+                    }
+                }
+            }
+            
+            // B3: Nếu tìm được ô thay thế, di chuyển tới đó
+            if (bestMovePos != Vector2Int.zero)
+            {
+                // Gọi MoveEnemy (đã được sửa logic ở các lần trước)
+                movedSuccessfully = MoveEnemy(enemy, bestMovePos);
+            }
+        }
+
+        // 🚨 CHỈ LOG LỖI NẾU KHÔNG THỂ DI CHUYỂN
+        if (!movedSuccessfully)
+        {
+             Debug.LogWarning($"🚫 {enemy.name} bị mắc kẹt hoặc bị bao vây tại {enemy.currentPosition}. Không thể Patrol.");
+        }
+
         UpdateEnemyVision(enemy);
         yield return null;
     }
@@ -319,6 +386,8 @@ public class EnemySystem : Singleton<EnemySystem>
 
     private void UpdateEnemyVision(EnemyUnit enemy)
     {
+        if (enemy.currentState == EnemyState.Patrol) return;
+        
         foreach (var hero in HeroUnit.GetAllHeroes())
         {
             if (hero.IsDead) continue;
@@ -364,7 +433,11 @@ public class EnemySystem : Singleton<EnemySystem>
             if (hero.IsDead) continue;
             if (VisionSystem.Instance.IsTileInVision(enemy, hero.currentPosition))
             {
-                enemy.heroVisibleHistory.AddIfNotContains(hero.currentPosition);
+                if (enemy.currentState != EnemyState.Patrol) 
+                {
+                    enemy.heroVisibleHistory.AddIfNotContains(hero.currentPosition);
+                }
+                
                 if (enemy.currentState != EnemyState.Chase)
                     enemy.SetState(EnemyState.Chase, hero);
                 return hero;
@@ -493,5 +566,3 @@ public class EnemySystem : Singleton<EnemySystem>
             if (!list.Contains(item)) list.Add(item);
         }
     }
-
-    
