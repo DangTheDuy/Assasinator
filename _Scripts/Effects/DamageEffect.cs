@@ -1,4 +1,3 @@
-// File: DamageEffect.cs (MỚI)
 using UnityEngine;
 
 [CreateAssetMenu(menuName = "Skill System/Effects/Damage")]

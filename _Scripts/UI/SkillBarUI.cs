@@ -1,4 +1,4 @@
-// File: SkillBarUI.cs (Đã sửa lỗi Setup bị thiếu)
+// File: SkillBarUI.cs
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
@@ -12,7 +12,6 @@ public class SkillBarUI : Singleton<SkillBarUI>
     private SkillData selectedSkill = null;
     public static bool IsEnemyInteractionOpen { get; private set; } = false;
 
-    // 🛠️ PHƯƠNG THỨC SETUP ĐÃ ĐƯỢC CHÈN LẠI (Khắc phục lỗi CS1061)
     public void Setup(Unit unit, List<SkillData> skills, Unit forcedTarget = null)
     {
         owner = unit;
@@ -26,22 +25,45 @@ public class SkillBarUI : Singleton<SkillBarUI>
             CreateSkillButton(skill);
         }
 
-        gameObject.SetActive(false);
+        // Tạm thời ẩn đi để UIManager.Show/Hide kiểm soát
+        // gameObject.SetActive(false); 
+        // 🚨 Lưu ý: Dòng này đã được di chuyển ra ngoài UIManager để kiểm soát
+        if (forcedTarget == null)
+        {
+            gameObject.SetActive(false); // Chỉ ẩn nếu là skill bar của Hero (mặc định)
+        }
     }
-    // Hết phương thức Setup
 
     private void CreateSkillButton(SkillData skill)
     {
         HeroUnit hero = owner as HeroUnit;
+        
+        // --- KIỂM TRA NULL AN TOÀN HƠN CHO NRE (Dòng 38 cũ) ---
+        if (buttonPrefab == null || buttonContainer == null)
+        {
+            Debug.LogError("SkillBarUI: buttonPrefab hoặc buttonContainer bị thiếu tham chiếu trong Inspector!");
+            return;
+        }
+
         GameObject btnObj = Instantiate(buttonPrefab, buttonContainer);
         Button btn = btnObj.GetComponent<Button>();
-        btnObj.GetComponentInChildren<Image>().sprite = skill.icon;
+        
+        Image skillIcon = btnObj.GetComponentInChildren<Image>();
+        if (skillIcon != null && skill.icon != null)
+        {
+            skillIcon.sprite = skill.icon;
+        } 
+        else if (skillIcon == null)
+        {
+            // Lỗi NRE xảy ra nếu Image không tồn tại
+            Debug.LogWarning($"SkillBarUI: Button prefab '{buttonPrefab.name}' thiếu component Image con.");
+            return;
+        }
+        // --------------------------------------------------------
 
         bool isInteractable = false;
-
-        // --- BẮT ĐẦU LOGIC KIỂM TRA ĐIỀU KIỆN MỚI ---
         
-        // 1. Kiểm tra điều kiện chung: AP và Caster hợp lệ
+        // ... (Giữ nguyên LOGIC KIỂM TRA ĐIỀU KIỆN MỚI) ...
         if (hero == null || hero.IsDead || !hero.HasEnoughAP(skill.apCost))
         {
             isInteractable = false;
@@ -49,46 +71,35 @@ public class SkillBarUI : Singleton<SkillBarUI>
         else
         {
             TargetingData targeting = skill.targeting;
-
-            // 2. Trường hợp Interaction Menu (có forcedTarget - ví dụ: Enemy)
             if (forcedTarget != null)
             {
-                // Skill phải có Targeting Data để hoạt động với target bên ngoài
                 if (targeting == null)
                 {
-                    isInteractable = false; // Không thể dùng Skill Self-use cho target khác
+                    isInteractable = false; 
                 }
                 else
                 {
-                    // 🚨 SỬ DỤNG IsTargetValid ĐỂ KIỂM TRA TÍNH HỢP LỆ
                     isInteractable = targeting.IsTargetValid(hero, forcedTarget.currentPosition);
-
-                    // Xử lý điều kiện đặc biệt (Assassinate)
                     if (skill.skillName == "Assassinate" && hero.IsDetected)
                     {
                         isInteractable = false;
                     }
                 }
             }
-            // 3. Trường hợp Chọn Target (Targeting Mode) HOẶC Self-use
             else 
             {
-                // Nếu Skill cần Target (targeting != null) HOẶC là Self-use (targeting == null)
-                // và đủ AP, nó luôn tương tác được để mở Target Mode hoặc Execute ngay.
                 isInteractable = true;
             }
         }
         
-        // --- Cập nhật nút và Overlay (Giữ nguyên) ---
         btn.interactable = isInteractable;
-
         Image overlay = btnObj.transform.Find("Overlay")?.GetComponent<Image>();
         if (overlay != null)
         {
             overlay.enabled = !isInteractable;
         }
 
-        // --- Logic onClick (REFACTORED) ---
+        // ... (Giữ nguyên LOGIC ONCLICK REFACTORED) ...
         btn.onClick.AddListener(() =>
         {
             if (!isInteractable)
@@ -97,7 +108,6 @@ public class SkillBarUI : Singleton<SkillBarUI>
                 return;
             }
 
-            // Đã kiểm tra AP và hero ở trên, chỉ cần kiểm tra trùng lặp
             bool isAlreadyTargetingThisSkill = TargetingSystem.Instance.IsTargeting && selectedSkill == skill;
 
             if (isAlreadyTargetingThisSkill)
@@ -108,8 +118,6 @@ public class SkillBarUI : Singleton<SkillBarUI>
                 return;
             }
 
-            // 🛠️ SỬA LỖI: Xác định có cần TargetMode hay không
-            // Chỉ cần mở Targeting Mode nếu Skill có TargetingData VÀ không có ForcedTarget.
             bool requiresTargetingMode = skill.targeting != null && forcedTarget == null;
 
             if (requiresTargetingMode)
@@ -118,15 +126,11 @@ public class SkillBarUI : Singleton<SkillBarUI>
                 TargetingSystem.Instance.EnterTargetMode(hero, skill); 
                 return;
             }
-
-            // 🛠️ THỰC THI SKILL: Nếu là ForcedTarget hoặc Self-use (không cần Targeting Mode)
             
             Unit targetToExecute = forcedTarget != null ? forcedTarget : owner;
             
-            // Xử lý Cost
             hero.SpendAP(skill.apCost);
             
-            // 🚨 Gọi logic thực thi Effect
             foreach (var effect in skill.effects)
             {
                 GameAction action = effect.CreateAction(owner, targetToExecute);
@@ -138,20 +142,14 @@ public class SkillBarUI : Singleton<SkillBarUI>
         });
     }
 
-
     private void ClearButtons()
     {
         foreach (Transform child in buttonContainer)
             Destroy(child.gameObject);
     }
-
-    public void ResetSelectedSkill()
-    {
-        selectedSkill = null;
-    }
-
+    
+    public void ResetSelectedSkill() { selectedSkill = null; }
     public void Show() => gameObject.SetActive(true);
-
     public void Hide()
     {
         gameObject.SetActive(false);

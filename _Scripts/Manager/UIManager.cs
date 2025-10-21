@@ -1,24 +1,36 @@
+// File: UIManager.cs (Sửa đổi)
+
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class UIManager : Singleton<UIManager>
 {
-    public SkillBarUI skillBarPrefab;   // kéo prefab vào Inspector
+    public SkillBarUI skillBarPrefab; 
     private SkillBarUI currentSkillBar;
 
-    public void ShowSkillBar(HeroUnit hero)
+    public void ShowSkillBar(HeroUnit hero) // Dùng cho Skill Bar mặc định của Hero
     {
-        // Nếu chưa có thì spawn 1 skillbar mới
+        // ... (Giữ nguyên logic cũ nếu cần)
+        ShowSkillBarForTarget(hero, null, hero.GetSkills());
+    }
+
+    // 🛠️ HÀM MỚI: Hiển thị Skill Bar khi chọn một mục tiêu
+    public void ShowSkillBarForTarget(HeroUnit hero, Unit forcedTarget, List<SkillData> skillsToShow)
+    {
         if (currentSkillBar == null)
             currentSkillBar = Instantiate(skillBarPrefab, transform);
 
-        currentSkillBar.Setup(hero, hero.GetSkills());
+        // 🚨 SỬ DỤNG HÀM SETUP VỚI FORCED TARGET
+        currentSkillBar.Setup(hero, skillsToShow, forcedTarget);
         
-        // gán follow theo hero
+        // Gán follow theo Target
         WorldSpaceUIFollow follow = currentSkillBar.GetComponent<WorldSpaceUIFollow>();
         if (follow != null)
-            follow.target = hero.transform;
+        {
+            // Follow Enemy nếu có forcedTarget, ngược lại follow Hero
+            follow.target = (forcedTarget != null) ? forcedTarget.transform : hero.transform;
+        }
 
         currentSkillBar.Show();
     }
@@ -29,4 +41,3 @@ public class UIManager : Singleton<UIManager>
             currentSkillBar.Hide();
     }
 }
-
