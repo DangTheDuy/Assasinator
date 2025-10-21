@@ -1,18 +1,19 @@
+// File: SkillData.cs (Sửa đổi)
 using UnityEngine;
 
-[CreateAssetMenu(menuName = "Game/Skill")]
+public enum SkillType { Damage, Utility, Healing, Movement }
+
+[CreateAssetMenu(menuName = "Skill System/Skill Data (Base)")]
 public class SkillData : ScriptableObject
 {
-    public string skillName;
+    public string skillName = "New Skill";
     public Sprite icon;
     [TextArea] public string description;
+    public SkillType type = SkillType.Damage;
     public int apCost = 1;
-    public bool requireTarget; 
-    public SkillType type;
-
-    public virtual void Execute(Unit caster, Unit target)
-    {
-        // TODO: logic skill (tấn công, buff, ám sát, ...)
-        Debug.Log("Cast Skill: " + skillName);
-    }
+    
+    [Header("Skill Components")]
+    // 💡 Liên kết với Target Type và Effect Type (SRP & OCP)
+    public TargetingData targeting; 
+    public EffectData[] effects; 
 }

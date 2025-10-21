@@ -9,17 +9,59 @@ public class PerformSystem : MonoBehaviour
     private void OnEnable()
     {
         ActionSystem.AttachPerformer<AssassinateGA>(AssassinatePerformer);
-        ActionSystem.AttachPerformer<ShurikenGA>(ShurikenPerformer);
+        ActionSystem.AttachPerformer<DamageGA>(DamagePerformer);
+        ActionSystem.AttachPerformer<FightGA>(FightPerformer);        
         ActionSystem.AttachPerformer<AttackHeroGA>(AttackHeroPerformer);
-        ActionSystem.AttachPerformer<FightGA>(FightPerformer);
     }
 
     private void OnDisable()
     {
         ActionSystem.DetachPerformer<AssassinateGA>();
-        ActionSystem.DetachPerformer<ShurikenGA>();
+        ActionSystem.DetachPerformer<DamageGA>();
+        ActionSystem.DetachPerformer<FightGA>();        
         ActionSystem.DetachPerformer<AttackHeroGA>();
-        ActionSystem.DetachPerformer<FightGA>();
+    }
+    
+    // ================== PERFOMERS CŨ (ĐÃ SỬA) ==================
+
+    // 🛠️ FIGHT PERFORMER MỚI: Chỉ dùng cho hiệu ứng cận chiến có va chạm/phản đòn
+    private IEnumerator FightPerformer(FightGA fightGA)
+    {
+        int damageToTarget = fightGA.Caster.AttackPower;
+        int damageToCaster = fightGA.Target.AttackPower;
+
+        // ... (Logic animation) ...
+
+        fightGA.Target.TakeDamage(damageToTarget);
+        fightGA.Caster.TakeDamage(damageToCaster);
+        
+        // ... (Logic cập nhật UI và cleanup) ...
+        yield return new WaitForSeconds(0.3f);
+    }
+    
+    // ================== PERFOMER MỚI ==================
+    private IEnumerator DamagePerformer(DamageGA damageGA)
+    {
+        if (damageGA.Caster == null || damageGA.Target == null || damageGA.Target.IsDead) yield break;
+
+        // 1. Animation đơn giản (ví dụ: chỉ lắc mục tiêu)
+        yield return damageGA.Target.transform.DOShakePosition(
+            duration: 0.2f, 
+            strength: new Vector3(0.15f, 0.15f, 0), 
+            vibrato: 20, 
+            randomness: 90, 
+            snapping: false, 
+            fadeOut: true
+        ).WaitForCompletion();
+
+        // 2. Gây sát thương cấu hình
+        damageGA.Target.TakeDamage(damageGA.DamageAmount);
+
+        // 3. Cập nhật UI
+        if (damageGA.Target is HeroUnit heroTarget)
+            heroTarget.UpdateHUD();
+
+        yield return new WaitForSeconds(0.2f);
     }
 
     private IEnumerator AssassinatePerformer(AssassinateGA assassinateGA)
@@ -29,67 +71,6 @@ public class PerformSystem : MonoBehaviour
         {
             UIManager.Instance.ShowSkillBar(Unit.SelectedHero);
         }
-    }
-
-    private IEnumerator FightPerformer(FightGA fightGA)
-    {
-        if (fightGA.Caster == null || fightGA.Target == null) yield break;
-        if (fightGA.Caster.IsDead || fightGA.Target.IsDead) yield break;
-
-        int damageToTarget = fightGA.Caster.AttackPower;
-        int damageToCaster = fightGA.Target.AttackPower;
-
-        Vector3 casterStart = fightGA.Caster.transform.position;
-        Vector3 targetStart = fightGA.Target.transform.position;
-        Vector3 meetPoint = (casterStart + targetStart) / 2f;
-
-        Tween casterMove = fightGA.Caster.transform.DOMove(meetPoint, 0.25f).SetEase(Ease.OutQuad);
-        Tween targetMove = fightGA.Target.transform.DOMove(meetPoint, 0.25f).SetEase(Ease.OutQuad);
-
-        yield return DOTween.Sequence().Join(casterMove).Join(targetMove).WaitForCompletion();
-
-        Tween casterShake = fightGA.Caster.transform.DOShakePosition(
-            duration: 0.2f,
-            strength: new Vector3(0.15f, 0.15f, 0),
-            vibrato: 20,
-            randomness: 90,
-            snapping: false,
-            fadeOut: true
-        );
-
-        Tween targetShake = fightGA.Target.transform.DOShakePosition(
-            duration: 0.2f,
-            strength: new Vector3(0.15f, 0.15f, 0),
-            vibrato: 20,
-            randomness: 90,
-            snapping: false,
-            fadeOut: true
-        );
-
-        yield return DOTween.Sequence().Join(casterShake).Join(targetShake).WaitForCompletion();
-        Tween casterBack = fightGA.Caster.transform.DOMove(casterStart, 0.25f).SetEase(Ease.InQuad);
-        Tween targetBack = fightGA.Target.transform.DOMove(targetStart, 0.25f).SetEase(Ease.InQuad);
-
-        yield return DOTween.Sequence().Join(casterBack).Join(targetBack).WaitForCompletion();
-        fightGA.Target.TakeDamage(damageToTarget);
-        fightGA.Caster.TakeDamage(damageToCaster);
-
-        // Cập nhật UI HP
-        if (fightGA.Target is HeroUnit heroTarget)
-            heroTarget.UpdateHUD();
-        if (fightGA.Caster is HeroUnit heroCaster)
-            heroCaster.UpdateHUD();
-
-        if (Unit.SelectedEnemy != null)
-        {
-            Unit.SelectedEnemy.OnDeselect();
-        }
-        yield return new WaitForSeconds(0.3f);
-    }
-
-    private IEnumerator ShurikenPerformer(ShurikenGA shurikenGA)
-    {
-        yield return ExecuteKill(shurikenGA.Target);
     }
 
     private IEnumerator ExecuteKill(Unit target)

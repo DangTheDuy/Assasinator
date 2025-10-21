@@ -9,12 +9,13 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 22677437031e2324493e4fb9186838cc, type: 3}
-  m_Name: FightSkill
+  m_Script: {fileID: 11500000, guid: d425b10348c4dd24b8b1ab2df939ae18, type: 3}
+  m_Name: Assassinate
   m_EditorClassIdentifier: 
-  skillName: Fight
-  icon: {fileID: 21300000, guid: cd604c42494e05e47b6ff21eda6ab078, type: 3}
+  skillName: New Skill
+  icon: {fileID: 0}
   description: 
-  apCost: 1
-  requireTarget: 0
   type: 0
+  apCost: 1
+  targeting: {fileID: 0}
+  effects: []

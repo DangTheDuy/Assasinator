@@ -10,8 +10,13 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d425b10348c4dd24b8b1ab2df939ae18, type: 3}
-  m_Name: Flash
+  m_Name: Fight
   m_EditorClassIdentifier: 
-  skillName: Flash
-  icon: {fileID: 21300000, guid: 2b05963f8be17e74d821b71ed8aa20a0, type: 3}
+  skillName: Fight
+  icon: {fileID: 21300000, guid: 19b830f56a53c054494b5dc855e93205, type: 3}
   description: 
+  type: 0
+  apCost: 1
+  targeting: {fileID: 11400000, guid: b85862da5463ffc42957b94516b1a357, type: 2}
+  effects:
+  - {fileID: 11400000, guid: 55b2f25564bb3dd4db26eb463ea93f1c, type: 2}
