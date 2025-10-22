@@ -12,10 +12,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d425b10348c4dd24b8b1ab2df939ae18, type: 3}
   m_Name: Shuriken
   m_EditorClassIdentifier: 
-  skillName: New Skill
-  icon: {fileID: 0}
+  skillName: Shuriken
+  icon: {fileID: 21300000, guid: 18740e0af64aad247bb9c9dcee9fa304, type: 3}
   description: 
   type: 0
   apCost: 1
-  targeting: {fileID: 0}
-  effects: []
+  targeting: {fileID: 11400000, guid: a37c6a3313d9d5342bbc1bd9cb8a2aba, type: 2}
+  wrappedEffects:
+  - effect: {fileID: 11400000, guid: 55b2f25564bb3dd4db26eb463ea93f1c, type: 2}
+    baseDamage: 2
+    damageMultiplier: 0

@@ -18,5 +18,7 @@ MonoBehaviour:
   type: 0
   apCost: 1
   targeting: {fileID: 11400000, guid: b85862da5463ffc42957b94516b1a357, type: 2}
-  effects:
-  - {fileID: 11400000, guid: 55b2f25564bb3dd4db26eb463ea93f1c, type: 2}
+  wrappedEffects:
+  - effect: {fileID: 11400000, guid: 55b2f25564bb3dd4db26eb463ea93f1c, type: 2}
+    baseDamage: 0
+    damageMultiplier: 1

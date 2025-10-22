@@ -21,5 +21,8 @@ MonoBehaviour:
   maxAP: 30
   attackRange: 1
   assassinateRange: 0
-  skills: []
+  skills:
+  - {fileID: 11400000, guid: a242788252f049c48a27bdfa95e97c8b, type: 2}
+  passives:
+  - {fileID: 11400000, guid: afc6e7f1987f03f448f67b239b49ee6d, type: 2}
   detectionChance: 10

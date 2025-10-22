@@ -7,5 +7,8 @@ public abstract class GameAction
 {
     public List<GameAction> PreReactions { get; private set;} = new();
     public List<GameAction> PerformReactions { get;private set;} = new();
-    public List<GameAction> PostReactions { get; private set;} = new();
+    public List<GameAction> PostReactions { get; private set; } = new();
+    public Unit Caster { get; protected set; }
+    public Unit Target { get; protected set; }
+    public bool IsPassiveAction { get; protected set; } = false;
 }

@@ -15,5 +15,6 @@ public class UnitData : ScriptableObject
     public int attackRange;
     public int assassinateRange;
     public List<SkillData> skills;
+    public List<PassiveData> passives;
     [Range(0, 100)] public int detectionChance = 10;
 }

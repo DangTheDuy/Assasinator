@@ -18,5 +18,5 @@ MonoBehaviour:
   type: 2
   value: 0
   consumable: 1
-  linkedSkill: {fileID: 11400000, guid: a94fa58360c1abf47bad07fdc57f1708, type: 2}
+  linkedSkill: {fileID: 11400000, guid: a242788252f049c48a27bdfa95e97c8b, type: 2}
   requireTarget: 0

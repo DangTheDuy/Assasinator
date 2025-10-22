@@ -55,6 +55,14 @@ public class HeroUnit : Unit
         HeroHUDManager hudManager = FindObjectOfType<HeroHUDManager>();
         hudManager?.CreateHUD(this);
 
+        HeroPassiveManager passiveManager = GetComponent<HeroPassiveManager>();
+        if (passiveManager == null)
+        {
+            passiveManager = gameObject.AddComponent<HeroPassiveManager>();
+        }
+        Debug.Log($"Hero {name} đang thiết lập {data.passives.Count} passive.");
+        passiveManager.Setup(this, data.passives);
+
         OnHeroSpawned?.Invoke(this);
     }
 

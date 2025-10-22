@@ -3,12 +3,10 @@ using UnityEngine;
 
 public class AssassinateGA : GameAction
 {
-    public Unit Caster { get; private set; }
-    public Unit Target { get; private set; }
-
-    public AssassinateGA(Unit caster, Unit target)
+    public AssassinateGA(Unit caster, Unit target, bool isPassive = false)
     {
         Caster = caster;
         Target = target;
+        IsPassiveAction = isPassive;
     }
 }
