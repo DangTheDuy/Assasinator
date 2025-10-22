@@ -138,11 +138,29 @@ public class SkillBarUI : Singleton<SkillBarUI>
             
             hero.SpendAP(skill.apCost);
             
-            foreach (var effect in skill.effects)
+            SkillData currentSkillData = skill; 
+
+            // Kiểm tra null an toàn cho logic tùy chỉnh
+            if (currentSkillData.wrappedEffects != null)
             {
-                GameAction action = effect.CreateAction(owner, targetToExecute);
-                if (action != null)
-                    ActionSystem.Instance.Perform(action);
+                foreach (var wrapper in currentSkillData.wrappedEffects)
+                {
+                    if (wrapper?.effect == null) continue;
+
+                    // Truyền giá trị tùy chỉnh vào CreateAction
+                    GameAction action = wrapper.effect.CreateAction(
+                        hero, 
+                        targetToExecute, 
+                        wrapper.baseDamage, 
+                        wrapper.damageMultiplier
+                    );
+                    
+                    if (action != null)
+                        ActionSystem.Instance.Perform(action);
+                }
+            } else {
+                 // 🚨 THÊM CẢNH BÁO: Nếu wrappedEffects là null, có thể bạn chưa gán trong Inspector
+                 Debug.LogWarning($"Skill '{skill.skillName}' thiếu mảng wrappedEffects!");
             }
 
             RefreshUI();

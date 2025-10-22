@@ -48,16 +48,26 @@ public class TargetingSystem : Singleton<TargetingSystem>
     private void ExecuteSkill(HeroUnit caster, Unit target)
     {
         if (!caster.HasEnoughAP(currentSkill.apCost)) return;
-
-        // Xử lý Cost (AP và Item)
-        // ... (Logic SpendAP, Consume Item như cũ) ...
-        
-        // 💡 SỬA: Thực thi Action cho từng Effect
-        foreach (var effect in currentSkill.effects)
+        if (currentSkill.wrappedEffects != null)
         {
-            GameAction action = effect.CreateAction(caster, target);
-            if (action != null)
-                ActionSystem.Instance.Perform(action);
+            foreach (var wrapper in currentSkill.wrappedEffects)
+            {
+                if (wrapper?.effect == null) continue;
+                GameAction action = wrapper.effect.CreateAction(
+                    caster, 
+                    target, 
+                    wrapper.baseDamage, 
+                    wrapper.damageMultiplier
+                );
+
+                if (action != null)
+                    ActionSystem.Instance.Perform(action);
+            }
+        }
+        if (currentItemStack != null)
+        {
+            caster.UseItem(currentItemStack); 
+            currentItemStack = null;
         }
     }
 }

@@ -3,12 +3,12 @@ using UnityEngine;
 [CreateAssetMenu(menuName = "Skill System/Effects/Damage")]
 public class DamageEffect : EffectData
 {
-    public int baseDamage = 0;
-    public int damageMultiplier = 1;
-
-    public override GameAction CreateAction(Unit caster, Unit target)
+    public override GameAction CreateAction(Unit caster, Unit target, int customValue, float customMultiplier)
     {
-        int calculatedDamage = baseDamage + Mathf.RoundToInt(caster.AttackPower * damageMultiplier);
-        return new DamageGA(caster, target, calculatedDamage); 
+        if (target == null) return null;
+        
+        int baseDamage = Mathf.RoundToInt(caster.AttackPower * customMultiplier) ;
+        int finalDamage = baseDamage + customValue;
+        return new DamageGA(caster, target, finalDamage);
     }
 }

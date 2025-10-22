@@ -4,5 +4,5 @@ using UnityEngine;
 
 public abstract class EffectData : ScriptableObject
 {
-    public abstract GameAction CreateAction(Unit caster, Unit target);
+    public abstract GameAction CreateAction(Unit caster, Unit target, int customValue, float customMultiplier);
 }

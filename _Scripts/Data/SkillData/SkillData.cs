@@ -1,7 +1,21 @@
-// File: SkillData.cs (Sửa đổi)
 using UnityEngine;
 
+//===================== SKILL TYPE ===========================
 public enum SkillType { Damage, Utility, Healing, Movement }
+
+//===================== SKILL WRAPPER ===========================
+
+[System.Serializable]
+public class SkillEffectWrapper // 🚨 LỚP MỚI: NHÓM EFFECT VÀ GIÁ TRỊ
+{
+    public EffectData effect;
+
+    [Header("Custom Values (Optional)")]
+    public int baseDamage = 0;        // Tùy chỉnh Dame gốc
+    public float damageMultiplier = 1f; // Tùy chỉnh Tỷ lệ
+}
+
+//===================== SKILL DATA ===========================
 
 [CreateAssetMenu(menuName = "Skill System/Skill Data (Base)")]
 public class SkillData : ScriptableObject
@@ -15,5 +29,5 @@ public class SkillData : ScriptableObject
     [Header("Skill Components")]
     // 💡 Liên kết với Target Type và Effect Type (SRP & OCP)
     public TargetingData targeting; 
-    public EffectData[] effects; 
+    public SkillEffectWrapper[] wrappedEffects;
 }
