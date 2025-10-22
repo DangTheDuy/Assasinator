@@ -162,7 +162,9 @@ public class EnemyUnit : Unit
     // ============================ UI INTERACTION ============================
     private void OnMouseDown()
     {
-        HeroUnit hero = SelectedHero ;
+        HeroUnit hero = SelectedHero;
+        
+        // 1. Xử lý Targeting Mode (Giữ nguyên)
         if (TargetingSystem.Instance?.IsTargeting == true)
         {
             TargetingSystem.Instance.TrySelectEnemy(this);
@@ -171,51 +173,51 @@ public class EnemyUnit : Unit
 
         if (hero == null) return;
         
-        // 3. Xử lý logic chọn/bỏ chọn
         if (SelectedEnemy == this)
         {
-            // 3a. Nếu đã chọn Enemy này: Bỏ chọn
-            OnDeselect();
-            
-            // 🚨 SỬA LỖI: Ẩn SkillBar hiện tại (của Enemy)
-            UIManager.Instance.HideSkillBar(); 
-
-            // 🚨 THÊM TÍNH NĂNG: Hiển thị lại Skill Bar mặc định của Hero
-            // (Nếu bạn muốn Skill Bar của Hero hiện lên sau khi bỏ chọn Enemy)
-            // UIManager.Instance.ShowSkillBar(hero); // Cần hàm ShowSkillBar đơn giản
+            OnDeselect(); 
+            UIManager.Instance.ShowSkillBar(hero); 
         }
         else
         {
-            // 3b. Nếu chưa chọn hoặc chọn Enemy khác: Chọn Enemy mới
-            
-            // Bỏ chọn Enemy cũ trước (nếu có)
-            if (Unit.SelectedEnemy != null && Unit.SelectedEnemy != this)
+            if (SelectedEnemy != null && SelectedEnemy != this)
             {
-                Unit.SelectedEnemy.OnDeselect(); // Gọi OnDeselect của Enemy cũ
+                SelectedEnemy.OnDeselect();
             }
             
             // Chọn Enemy mới và Highlight
-            Unit.SelectedEnemy = this;
+            SelectedEnemy = this;
             SetHighlight(true);
-            
-            // 🚨 GỌI HÀM CỦA UIManager: Hiển thị Skill Bar Tương Tác
-            // Đây là bước quan trọng nhất để hiện Skill Bar trên đầu Enemy
             UIManager.Instance.ShowSkillBarForTarget(hero, this, GetInteractionSkills());
         }
     }
 
-    // Giữ nguyên OnDeselect, nhưng đảm bảo nó gọi HideSkillBar nếu cần
     public override void OnDeselect()
     {
-        // ... (Giữ nguyên logic SelectedEnemy = null, SetHighlight, Destroy arrow/overlay) ...
-        if (Unit.SelectedEnemy == this) Unit.SelectedEnemy = null;
+        if (SelectedEnemy == this) SelectedEnemy = null;
+        if (UIManager.Instance != null)
+        {
+            UIManager.Instance.HideSkillBar();
+        }
         SetHighlight(false);
 
-        // 🚨 QUAN TRỌNG: Ẩn Skill Bar khi mục tiêu bị bỏ chọn
-        UIManager.Instance.HideSkillBar();
+        if (arrowInstance != null) 
+        {
+            if (arrowInstance.gameObject != null) 
+            {
+                Destroy(arrowInstance.gameObject);
+            }
+            arrowInstance = null;
+        } 
         
-        if (arrowInstance != null) Destroy(arrowInstance);
-        if (highlightOverlay != null) Destroy(highlightOverlay);
+        if (highlightOverlay != null) 
+        {
+            if (highlightOverlay.gameObject != null)
+            {
+                Destroy(highlightOverlay.gameObject);
+            }
+            highlightOverlay = null;
+        }
     }
 
     private void OnDestroy() => OnDeselect();

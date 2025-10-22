@@ -238,8 +238,10 @@ public class HeroUnit : Unit
             Instantiate(icon, apContainer);
         }
 
-        if (SelectedHero != null)
+        if (SelectedHero == this && !SkillBarUI.IsEnemyInteractionOpen)
+        {
             UIManager.Instance.ShowSkillBar(this);
+        }
     }
 
     public bool HasEnoughAP(int amount) => currentAP >= amount;

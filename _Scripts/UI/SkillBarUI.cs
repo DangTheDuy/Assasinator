@@ -9,6 +9,7 @@ public class SkillBarUI : Singleton<SkillBarUI>
     public Transform buttonContainer;
     private Unit owner;
     private Unit forcedTarget;
+    private List<SkillData> currentSkills;
     private SkillData selectedSkill = null;
     public static bool IsEnemyInteractionOpen { get; private set; } = false;
 
@@ -16,6 +17,7 @@ public class SkillBarUI : Singleton<SkillBarUI>
     {
         owner = unit;
         this.forcedTarget = forcedTarget;
+        this.currentSkills = skills;
         IsEnemyInteractionOpen = forcedTarget != null;
 
         ClearButtons();
@@ -24,14 +26,10 @@ public class SkillBarUI : Singleton<SkillBarUI>
         {
             CreateSkillButton(skill);
         }
-
-        // Tạm thời ẩn đi để UIManager.Show/Hide kiểm soát
-        // gameObject.SetActive(false); 
-        // 🚨 Lưu ý: Dòng này đã được di chuyển ra ngoài UIManager để kiểm soát
-        if (forcedTarget == null)
+     /*   if (forcedTarget == null)
         {
-            gameObject.SetActive(false); // Chỉ ẩn nếu là skill bar của Hero (mặc định)
-        }
+            gameObject.SetActive(false); 
+        }*/
     }
 
     private void CreateSkillButton(SkillData skill)
@@ -79,10 +77,19 @@ public class SkillBarUI : Singleton<SkillBarUI>
                 }
                 else
                 {
+                    int distance = GridManager.Instance.GetDistance(hero.currentPosition, forcedTarget.currentPosition);
                     isInteractable = targeting.IsTargetValid(hero, forcedTarget.currentPosition);
-                    if (skill.skillName == "Assassinate" && hero.IsDetected)
+
+                    if (skill.skillName == "Assassinate")
                     {
-                        isInteractable = false;
+                        if (hero.IsDetected)
+                        {
+                            isInteractable = false; 
+                        }
+                        if (distance > hero.AssassinateRange)
+                        {
+                            isInteractable = false; 
+                        }
                     }
                 }
             }
@@ -138,7 +145,7 @@ public class SkillBarUI : Singleton<SkillBarUI>
                     ActionSystem.Instance.Perform(action);
             }
 
-            ResetSelectedSkill();
+            RefreshUI();
         });
     }
 
@@ -154,5 +161,15 @@ public class SkillBarUI : Singleton<SkillBarUI>
     {
         gameObject.SetActive(false);
         IsEnemyInteractionOpen = false;
+    }
+
+    public void RefreshUI()
+    {
+        if (owner != null && currentSkills != null)
+        {
+            // 🚨 SỬ DỤNG DANH SÁCH SKILL ĐÃ LƯU
+            Setup(owner, currentSkills, forcedTarget);
+            Show(); 
+        }
     }
 }

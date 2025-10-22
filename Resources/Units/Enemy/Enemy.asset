@@ -20,5 +20,6 @@ MonoBehaviour:
   defensePower: 0
   maxAP: 0
   attackRange: 0
+  assassinateRange: 0
   skills: []
   detectionChance: 0
